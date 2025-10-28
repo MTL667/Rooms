@@ -26,17 +26,16 @@ if (process.env.EMAIL_SERVER && process.env.EMAIL_FROM) {
 
 const authOptions = {
   providers,
+  trustHost: true,
   callbacks: {
     async signIn({ user, account, profile }: any) {
       try {
         if (account?.provider === "azure-ad" && profile?.tid) {
-          // Check if tenant exists, if not create it
           let tenant = await prisma.allowedTenant.findFirst({
             where: { tenantId: profile.tid },
           });
 
           if (!tenant) {
-            // Create tenant automatically
             tenant = await prisma.allowedTenant.create({
               data: {
                 tenantId: profile.tid,
@@ -46,14 +45,12 @@ const authOptions = {
             });
           }
 
-          // Check if this is the first user in the tenant
           const existingUsers = await prisma.user.count({
             where: { msTenantId: profile.tid },
           });
 
           const userRole = existingUsers === 0 ? 'ADMIN' : 'EXTERNAL';
 
-          // Create or update user
           await prisma.user.upsert({
             where: { email: user.email! },
             create: {
@@ -63,7 +60,7 @@ const authOptions = {
               msTenantId: profile.tid,
               msOid: profile.oid || null,
               status: "ACTIVE",
-              role: userRole, // First user becomes ADMIN
+              role: userRole,
             },
             update: { 
               name: user.name || null, 
@@ -93,7 +90,6 @@ const authOptions = {
       return session;
     },
     async redirect({ url, baseUrl }: any) {
-      // After successful login, redirect to dashboard
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       if (new URL(url).origin === baseUrl) return url;
       return `${baseUrl}/dashboard`;
