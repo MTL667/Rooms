@@ -24,12 +24,16 @@ const authOptions = {
     async signIn({ user, account, profile }: any) {
       try {
         if (account?.provider === "azure-ad" && profile?.tid) {
+          console.log('Processing Azure AD login for:', user.email, 'Tenant:', profile.tid);
+          
           try {
+            // Find or create tenant
             let tenant = await prisma.allowedTenant.findFirst({
               where: { tenantId: profile.tid },
             });
 
             if (!tenant) {
+              console.log('Creating new tenant:', profile.tid);
               tenant = await prisma.allowedTenant.create({
                 data: {
                   tenantId: profile.tid,
@@ -39,38 +43,55 @@ const authOptions = {
               });
             }
 
-            const existingUsers = await prisma.user.count({
+            // Check if this tenant already has ANY users
+            const existingUsers = await prisma.user.findMany({
               where: { msTenantId: profile.tid },
             });
 
-            const userRole = existingUsers === 0 ? 'ADMIN' : 'EXTERNAL';
+            console.log('Existing users for tenant:', existingUsers.length);
 
-            await prisma.user.upsert({
+            // First user becomes admin, others become external
+            const userRole = existingUsers.length === 0 ? 'ADMIN' : 'EXTERNAL';
+            console.log('Setting role for', user.email, 'to', userRole);
+
+            // Check if user already exists
+            const existingUser = await prisma.user.findUnique({
               where: { email: user.email! },
-              create: {
-                email: user.email!,
-                name: user.name || null,
-                identityProvider: "MICROSOFT",
-                msTenantId: profile.tid,
-                msOid: profile.oid || null,
-                status: "ACTIVE",
-                role: userRole,
-              },
-              update: { 
-                name: user.name || null, 
-                msOid: profile.oid || null, 
-                status: "ACTIVE",
-              },
             });
+
+            if (existingUser) {
+              // Update existing user
+              await prisma.user.update({
+                where: { email: user.email! },
+                data: { 
+                  name: user.name || null, 
+                  msOid: profile.oid || null, 
+                  status: "ACTIVE",
+                },
+              });
+              console.log('Updated existing user');
+            } else {
+              // Create new user
+              await prisma.user.create({
+                data: {
+                  email: user.email!,
+                  name: user.name || null,
+                  identityProvider: "MICROSOFT",
+                  msTenantId: profile.tid,
+                  msOid: profile.oid || null,
+                  status: "ACTIVE",
+                  role: userRole,
+                },
+              });
+              console.log('Created new user with role:', userRole);
+            }
           } catch (dbError) {
             console.error("Database error in signIn:", dbError);
-            // Continue even if database fails - user can still sign in
           }
         }
         return true;
       } catch (error) {
         console.error("SignIn error:", error);
-        // Return true to allow sign in even if callback fails
         return true;
       }
     },
@@ -79,6 +100,7 @@ const authOptions = {
         if (token?.email) {
           const user = await prisma.user.findUnique({ where: { email: token.email } });
           if (user) {
+            console.log('Session for user:', user.email, 'Role:', user.role);
             session.user.role = user.role;
             session.user.id = user.id;
             session.user.identityProvider = user.identityProvider;
