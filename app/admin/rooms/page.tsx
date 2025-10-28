@@ -85,13 +85,13 @@ export default function RoomsManagement() {
     <main className="p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Rooms Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Rooms Management</h1>
           <div className="flex gap-2">
             <button
               onClick={() => setShowForm(!showForm)}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
             >
-              Add Room
+              {showForm ? 'Cancel' : 'Add Room'}
             </button>
             <button
               onClick={() => router.push('/admin')}
@@ -106,43 +106,45 @@ export default function RoomsManagement() {
           <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 mb-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Name</label>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">Name</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full border rounded-lg px-4 py-2"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 text-gray-900"
+                  placeholder="Conference Room A"
                   required
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Capacity</label>
+                  <label className="block text-sm font-semibold mb-2 text-gray-900">Capacity</label>
                   <input
                     type="number"
                     value={formData.capacity}
                     onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
-                    className="w-full border rounded-lg px-4 py-2"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 text-gray-900"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Location</label>
+                  <label className="block text-sm font-semibold mb-2 text-gray-900">Location</label>
                   <input
                     type="text"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full border rounded-lg px-4 py-2"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 text-gray-900"
+                    placeholder="Floor 2"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">MS Resource Email</label>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">MS Resource Email</label>
                 <input
                   type="email"
                   value={formData.msResourceEmail}
                   onChange={(e) => setFormData({ ...formData, msResourceEmail: e.target.value })}
-                  className="w-full border rounded-lg px-4 py-2"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 text-gray-900"
                   placeholder="room-a@example.com"
                 />
               </div>
@@ -151,18 +153,18 @@ export default function RoomsManagement() {
                   type="checkbox"
                   checked={formData.active}
                   onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                  className="rounded"
+                  className="w-5 h-5 rounded"
                 />
-                <label className="text-sm">Active</label>
+                <label className="text-sm font-semibold text-gray-900">Active</label>
               </div>
               <div className="flex gap-2">
-                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg">
-                  Create
+                <button type="submit" className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700">
+                  Create Room
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="bg-gray-200 px-4 py-2 rounded-lg"
+                  className="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-400"
                 >
                   Cancel
                 </button>
@@ -173,28 +175,28 @@ export default function RoomsManagement() {
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-800">
               <tr>
-                <th className="p-3 text-left">Name</th>
-                <th className="p-3 text-left">Location</th>
-                <th className="p-3 text-left">Capacity</th>
-                <th className="p-3 text-left">MS Email</th>
-                <th className="p-3 text-left">Bookings</th>
-                <th className="p-3 text-left">Actions</th>
+                <th className="p-3 text-left text-white font-semibold">Name</th>
+                <th className="p-3 text-left text-white font-semibold">Location</th>
+                <th className="p-3 text-left text-white font-semibold">Capacity</th>
+                <th className="p-3 text-left text-white font-semibold">MS Email</th>
+                <th className="p-3 text-left text-white font-semibold">Bookings</th>
+                <th className="p-3 text-left text-white font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {rooms.map((room) => (
-                <tr key={room.id} className="border-t">
-                  <td className="p-3 font-semibold">{room.name}</td>
-                  <td className="p-3">{room.location || '-'}</td>
-                  <td className="p-3">{room.capacity}</td>
-                  <td className="p-3 text-sm text-gray-600">{room.msResourceEmail || '-'}</td>
-                  <td className="p-3">{room._count.bookings}</td>
+                <tr key={room.id} className="border-t hover:bg-gray-50">
+                  <td className="p-3 font-semibold text-gray-900">{room.name}</td>
+                  <td className="p-3 text-gray-700">{room.location || '-'}</td>
+                  <td className="p-3 text-gray-900">{room.capacity}</td>
+                  <td className="p-3 text-sm text-gray-600 font-mono">{room.msResourceEmail || '-'}</td>
+                  <td className="p-3 text-gray-900">{room._count.bookings}</td>
                   <td className="p-3">
                     <button
                       onClick={() => deleteRoom(room.id)}
-                      className="text-red-600 hover:underline text-sm"
+                      className="text-red-600 hover:underline text-sm font-semibold"
                     >
                       Delete
                     </button>
@@ -204,7 +206,7 @@ export default function RoomsManagement() {
             </tbody>
           </table>
           {rooms.length === 0 && (
-            <div className="p-6 text-center text-gray-500">No rooms yet</div>
+            <div className="p-6 text-center text-gray-700 font-medium">No rooms yet</div>
           )}
         </div>
       </div>
