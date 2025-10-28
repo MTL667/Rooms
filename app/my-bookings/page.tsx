@@ -3,8 +3,20 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+interface Booking {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  status: string;
+  description?: string;
+  room: {
+    name: string;
+  };
+}
+
 export default function MyBookingsPage() {
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,7 +78,7 @@ export default function MyBookingsPage() {
               <div>
                 <h2 className="text-xl font-semibold mb-4 text-gray-700">Upcoming</h2>
                 <div className="space-y-4">
-                  {upcomingBookings.map((booking: any) => (
+                  {upcomingBookings.map((booking) => (
                     <div key={booking.id} className="bg-white rounded-lg shadow-md p-6">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
@@ -95,7 +107,7 @@ export default function MyBookingsPage() {
               <div>
                 <h2 className="text-xl font-semibold mb-4 text-gray-700">Past</h2>
                 <div className="space-y-4">
-                  {pastBookings.map((booking: any) => (
+                  {pastBookings.map((booking) => (
                     <div key={booking.id} className="bg-white rounded-lg shadow-md p-6 opacity-75">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
