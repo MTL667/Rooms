@@ -3,7 +3,7 @@ import AzureAD from "next-auth/providers/azure-ad";
 import Email from "next-auth/providers/email";
 import { prisma } from "@/lib/prisma";
 
-const handler = NextAuth({
+const authOptions = {
   providers: [
     AzureAD({
       clientId: process.env.AZURE_CLIENT_ID!,
@@ -16,62 +16,58 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      if (account?.provider === "azure-ad" && profile?.tid) {
-        // Check if tenant is allowed
-        const tenant = await prisma.allowedTenant.findFirst({
-          where: {
-            tenantId: profile.tid,
-            active: true,
-          },
-        });
+    async signIn({ user, account, profile }: any) {
+      try {
+        if (account?.provider === "azure-ad" && profile?.tid) {
+          // Check if tenant is allowed
+          const tenant = await prisma.allowedTenant.findFirst({
+            where: {
+              tenantId: profile.tid,
+              active: true,
+            },
+          });
 
-        if (!tenant) {
-          return false;
+          if (!tenant) {
+            console.log(`Tenant ${profile.tid} not allowed`);
+            return false;
+          }
+
+          // Create or update user
+          await prisma.user.upsert({
+            where: { email: user.email! },
+            create: {
+              email: user.email!,
+              name: user.name || null,
+              identityProvider: "MICROSOFT",
+              msTenantId: profile.tid,
+              msOid: profile.oid || null,
+              status: "ACTIVE",
+              role: "EXTERNAL",
+            },
+            update: {
+              name: user.name || null,
+              msOid: profile.oid || null,
+              status: "ACTIVE",
+            },
+          });
+        } else if (account?.provider === "email") {
+          // Manual user
+          const userRecord = await prisma.user.findUnique({
+            where: { email: user.email! },
+          });
+
+          if (!userRecord || userRecord.status !== "ACTIVE") {
+            return false;
+          }
         }
 
-        // Create or update user
-        await prisma.user.upsert({
-          where: { email: user.email! },
-          create: {
-            email: user.email!,
-            name: user.name || null,
-            identityProvider: "MICROSOFT",
-            msTenantId: profile.tid,
-            msOid: profile.oid || null,
-            status: "ACTIVE",
-            role: "EXTERNAL", // Default, can be elevated
-          },
-          update: {
-            name: user.name || null,
-            msOid: profile.oid || null,
-            status: "ACTIVE",
-          },
-        });
-      } else if (account?.provider === "email") {
-        // Manual user - will need 2FA
-        const userRecord = await prisma.user.findUnique({
-          where: { email: user.email! },
-        });
-
-        if (!userRecord) {
-          return false; // Must be created by admin
-        }
-
-        if (userRecord.status !== "ACTIVE") {
-          return false;
-        }
-
-        // Check if 2FA is required
-        if (userRecord.identityProvider === "MANUAL" && !userRecord.twoFactorEnabled) {
-          // Redirect to 2FA enrollment
-          return `/enroll/2fa`;
-        }
+        return true;
+      } catch (error) {
+        console.error("SignIn error:", error);
+        return false;
       }
-
-      return true;
     },
-    async session({ session, token }) {
+    async session({ session }: any) {
       if (session.user?.email) {
         const user = await prisma.user.findUnique({
           where: { email: session.user.email },
@@ -89,6 +85,8 @@ const handler = NextAuth({
   pages: {
     signIn: "/auth/signin",
   },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
