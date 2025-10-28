@@ -19,12 +19,8 @@ const authOptions = {
     async signIn({ user, account, profile }: any) {
       try {
         if (account?.provider === "azure-ad" && profile?.tid) {
-          // Check if tenant is allowed
           const tenant = await prisma.allowedTenant.findFirst({
-            where: {
-              tenantId: profile.tid,
-              active: true,
-            },
+            where: { tenantId: profile.tid, active: true },
           });
 
           if (!tenant) {
@@ -32,7 +28,6 @@ const authOptions = {
             return false;
           }
 
-          // Create or update user
           await prisma.user.upsert({
             where: { email: user.email! },
             create: {
@@ -44,23 +39,12 @@ const authOptions = {
               status: "ACTIVE",
               role: "EXTERNAL",
             },
-            update: {
-              name: user.name || null,
-              msOid: profile.oid || null,
-              status: "ACTIVE",
-            },
+            update: { name: user.name || null, msOid: profile.oid || null, status: "ACTIVE" },
           });
         } else if (account?.provider === "email") {
-          // Manual user
-          const userRecord = await prisma.user.findUnique({
-            where: { email: user.email! },
-          });
-
-          if (!userRecord || userRecord.status !== "ACTIVE") {
-            return false;
-          }
+          const userRecord = await prisma.user.findUnique({ where: { email: user.email! } });
+          if (!userRecord || userRecord.status !== "ACTIVE") return false;
         }
-
         return true;
       } catch (error) {
         console.error("SignIn error:", error);
@@ -69,10 +53,7 @@ const authOptions = {
     },
     async session({ session }: any) {
       if (session.user?.email) {
-        const user = await prisma.user.findUnique({
-          where: { email: session.user.email },
-        });
-
+        const user = await prisma.user.findUnique({ where: { email: session.user.email } });
         if (user) {
           session.user.role = user.role;
           session.user.id = user.id;
@@ -82,11 +63,8 @@ const authOptions = {
       return session;
     },
   },
-  pages: {
-    signIn: "/auth/signin",
-  },
+  pages: { signIn: "/auth/signin" },
 };
 
-const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };
+export const { handlers } = NextAuth(authOptions);
+export const { GET, POST } = handlers;
