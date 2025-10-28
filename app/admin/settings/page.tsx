@@ -24,10 +24,10 @@ export default function SystemSettings() {
   };
 
   return (
-    <main className="p-6">
+    <main className="p-6 bg-white">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">System Settings</h1>
+          <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
           <button
             onClick={() => router.push('/admin')}
             className="bg-gray-600 text-white px-4 py-2 rounded-lg"

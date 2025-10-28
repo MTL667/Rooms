@@ -79,10 +79,10 @@ export default function RoomsManagement() {
     }
   };
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading) return <div className="p-6 bg-white">Loading...</div>;
 
   return (
-    <main className="p-6">
+    <main className="p-6 bg-white">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Rooms Management</h1>
@@ -187,7 +187,7 @@ export default function RoomsManagement() {
             </thead>
             <tbody>
               {rooms.map((room) => (
-                <tr key={room.id} className="border-t hover:bg-gray-50">
+                <tr key={room.id} className="border-t hover:bg-white">
                   <td className="p-3 font-semibold text-gray-900">{room.name}</td>
                   <td className="p-3 text-gray-700">{room.location || '-'}</td>
                   <td className="p-3 text-gray-900">{room.capacity}</td>

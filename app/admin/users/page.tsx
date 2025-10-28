@@ -82,13 +82,13 @@ export default function UsersManagement() {
     }
   };
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading) return <div className="p-6 bg-white">Loading...</div>;
 
   return (
-    <main className="p-6">
+    <main className="p-6 bg-white">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Users Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Users Management</h1>
           <div className="flex gap-2">
             <button
               onClick={() => setShowForm(!showForm)}

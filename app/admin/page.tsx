@@ -18,8 +18,8 @@ export default function AdminPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-gray-900">Loading...</p>
       </div>
     );
   }
@@ -27,13 +27,13 @@ export default function AdminPage() {
   if (session?.user?.role !== 'ADMIN') return null;
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
+    <main className="min-h-screen bg-white p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Admin Panel</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
           <button
             onClick={() => router.push('/dashboard')}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+            className="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 font-semibold"
           >
             Dashboard
           </button>
@@ -70,21 +70,24 @@ export default function AdminPage() {
             </p>
           </button>
 
-          <div className="bg-gray-600 text-white rounded-lg shadow p-6 opacity-75">
+          <button
+            onClick={() => router.push('/admin/settings')}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow p-6 text-left transition-colors"
+          >
             <div className="text-2xl font-semibold mb-2">⚙️ Settings</div>
-            <p className="text-gray-300 text-sm">
-              System configuration (coming soon)
+            <p className="text-indigo-100 text-sm">
+              System configuration
             </p>
-          </div>
+          </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">System Info</h2>
-          <p className="text-gray-600 text-sm">
-            Logged in as: <strong>{session?.user?.email}</strong>
+        <div className="bg-gray-50 rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">System Info</h2>
+          <p className="text-gray-700 text-sm">
+            Logged in as: <strong className="text-gray-900">{session?.user?.email}</strong>
           </p>
-          <p className="text-gray-600 text-sm">
-            Role: <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">{session?.user?.role}</span>
+          <p className="text-gray-700 text-sm">
+            Role: <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">{session?.user?.role}</span>
           </p>
         </div>
       </div>
