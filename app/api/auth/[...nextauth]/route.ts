@@ -14,16 +14,6 @@ const providers = [
   }),
 ];
 
-if (process.env.EMAIL_SERVER && process.env.EMAIL_FROM) {
-  const Email = require("next-auth/providers/email").default;
-  providers.push(
-    Email({
-      server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM,
-    })
-  );
-}
-
 const authOptions = {
   providers,
   trustHost: true,
@@ -71,9 +61,6 @@ const authOptions = {
               status: "ACTIVE",
             },
           });
-        } else if (account?.provider === "email") {
-          const userRecord = await prisma.user.findUnique({ where: { email: user.email! } });
-          if (!userRecord || userRecord.status !== "ACTIVE") return false;
         }
         return true;
       } catch (error) {
