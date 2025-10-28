@@ -1,11 +1,21 @@
 'use client';
 
 import { signIn } from "next-auth/react";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/dashboard');
+    }
+  }, [status, router]);
 
   const handleEmailSignIn = (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,12 +24,20 @@ export default function SignIn() {
     signIn('email', { email }).finally(() => setLoading(false));
   };
 
+  if (status === 'authenticated') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Redirecting...</p>
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Sign In</h1>
         <p className="text-gray-600 mb-8">
-          Choose your authentication method
+          Sign in to book rooms and view availability
         </p>
         
         <div className="space-y-4">

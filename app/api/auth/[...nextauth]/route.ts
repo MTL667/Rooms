@@ -14,7 +14,6 @@ const providers = [
   }),
 ];
 
-// Only add Email provider if EMAIL_SERVER is configured
 if (process.env.EMAIL_SERVER && process.env.EMAIL_FROM) {
   const Email = require("next-auth/providers/email").default;
   providers.push(
@@ -31,15 +30,30 @@ const authOptions = {
     async signIn({ user, account, profile }: any) {
       try {
         if (account?.provider === "azure-ad" && profile?.tid) {
-          const tenant = await prisma.allowedTenant.findFirst({
-            where: { tenantId: profile.tid, active: true },
+          // Check if tenant exists, if not create it
+          let tenant = await prisma.allowedTenant.findFirst({
+            where: { tenantId: profile.tid },
           });
 
           if (!tenant) {
-            console.log(`Tenant ${profile.tid} not allowed`);
-            return false;
+            // Create tenant automatically
+            tenant = await prisma.allowedTenant.create({
+              data: {
+                tenantId: profile.tid,
+                name: 'Auto-created tenant',
+                active: true,
+              },
+            });
           }
 
+          // Check if this is the first user in the tenant
+          const existingUsers = await prisma.user.count({
+            where: { msTenantId: profile.tid },
+          });
+
+          const userRole = existingUsers === 0 ? 'ADMIN' : 'EXTERNAL';
+
+          // Create or update user
           await prisma.user.upsert({
             where: { email: user.email! },
             create: {
@@ -49,9 +63,13 @@ const authOptions = {
               msTenantId: profile.tid,
               msOid: profile.oid || null,
               status: "ACTIVE",
-              role: "EXTERNAL",
+              role: userRole, // First user becomes ADMIN
             },
-            update: { name: user.name || null, msOid: profile.oid || null, status: "ACTIVE" },
+            update: { 
+              name: user.name || null, 
+              msOid: profile.oid || null, 
+              status: "ACTIVE",
+            },
           });
         } else if (account?.provider === "email") {
           const userRecord = await prisma.user.findUnique({ where: { email: user.email! } });
@@ -73,6 +91,12 @@ const authOptions = {
         }
       }
       return session;
+    },
+    async redirect({ url, baseUrl }: any) {
+      // After successful login, redirect to dashboard
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
+      return `${baseUrl}/dashboard`;
     },
   },
   pages: { signIn: "/auth/signin" },

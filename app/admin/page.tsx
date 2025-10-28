@@ -1,21 +1,56 @@
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
 export default function AdminPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
+    } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
+      router.push('/dashboard');
+    }
+  }, [status, session, router]);
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (session?.user?.role !== 'ADMIN') return null;
+
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
-        
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Admin Panel</h1>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 text-purple-600">Tenants Management</h2>
             <p className="text-gray-600 mb-4">
               Manage allowed Azure AD tenants for Microsoft authentication.
             </p>
-            <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm">
+            <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm mb-4">
               <li>Add/Remove allowed tenants</li>
               <li>View active tenant connections</li>
               <li>Monitor tenant usage</li>
             </ul>
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="text-sm text-gray-500">
               API: <code className="bg-gray-100 px-2 py-1 rounded">GET/POST /api/admin/tenants</code>
             </p>
           </div>
@@ -25,13 +60,13 @@ export default function AdminPage() {
             <p className="text-gray-600 mb-4">
               Create and manage manual users for external access.
             </p>
-            <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm">
+            <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm mb-4">
               <li>Invite external users</li>
               <li>Set user roles and permissions</li>
               <li>View user activity</li>
               <li>Manage 2FA enrollment</li>
             </ul>
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="text-sm text-gray-500">
               API: <code className="bg-gray-100 px-2 py-1 rounded">GET/POST /api/admin/users</code>
             </p>
           </div>
@@ -41,13 +76,13 @@ export default function AdminPage() {
             <p className="text-gray-600 mb-4">
               Configure available meeting rooms and their settings.
             </p>
-            <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm">
+            <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm mb-4">
               <li>Add/Edit room details</li>
               <li>Set capacity and location</li>
               <li>Link to Microsoft resource mailboxes</li>
               <li>Configure pricing for external rentals</li>
             </ul>
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="text-sm text-gray-500">
               API: <code className="bg-gray-100 px-2 py-1 rounded">GET/POST /api/admin/rooms</code>
             </p>
           </div>
@@ -57,13 +92,13 @@ export default function AdminPage() {
             <p className="text-gray-600 mb-4">
               Configure global settings and integrations.
             </p>
-            <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm">
+            <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm mb-4">
               <li>Microsoft Graph configuration</li>
               <li>Email template settings</li>
               <li>Privacy and masking rules</li>
               <li>System logs and audit trail</li>
             </ul>
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="text-sm text-gray-500">
               API: <code className="bg-gray-100 px-2 py-1 rounded">GET/POST /api/admin/settings</code>
             </p>
           </div>
@@ -71,8 +106,7 @@ export default function AdminPage() {
 
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-800">
-            <strong>Development Note:</strong> These admin features will be implemented with full CRUD interfaces. 
-            Use the API endpoints for now or Prisma Studio for quick management.
+            <strong>Note:</strong> You are logged in as <strong>{session?.user?.email}</strong> with role <strong>{session?.user?.role}</strong>
           </p>
         </div>
       </div>
