@@ -1,24 +1,32 @@
 import NextAuth from "next-auth";
 import AzureAD from "next-auth/providers/azure-ad";
-import Email from "next-auth/providers/email";
 import { prisma } from "@/lib/prisma";
 
-const authOptions = {
-  providers: [
-    AzureAD({
-      clientId: process.env.AZURE_CLIENT_ID!,
-      clientSecret: process.env.AZURE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          tenant: process.env.AZURE_TENANT_ID!,
-        },
+const providers = [
+  AzureAD({
+    clientId: process.env.AZURE_CLIENT_ID!,
+    clientSecret: process.env.AZURE_CLIENT_SECRET!,
+    authorization: {
+      params: {
+        tenant: process.env.AZURE_TENANT_ID!,
       },
-    }),
+    },
+  }),
+];
+
+// Only add Email provider if EMAIL_SERVER is configured
+if (process.env.EMAIL_SERVER && process.env.EMAIL_FROM) {
+  const Email = require("next-auth/providers/email").default;
+  providers.push(
     Email({
-      server: process.env.EMAIL_SERVER!,
-      from: process.env.EMAIL_FROM!,
-    }),
-  ],
+      server: process.env.EMAIL_SERVER,
+      from: process.env.EMAIL_FROM,
+    })
+  );
+}
+
+const authOptions = {
+  providers,
   callbacks: {
     async signIn({ user, account, profile }: any) {
       try {
