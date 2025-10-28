@@ -29,6 +29,9 @@ const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers,
   trustHost: true,
+  session: {
+    strategy: 'jwt',
+  },
   callbacks: {
     async signIn({ user, account, profile }: any) {
       try {
@@ -80,16 +83,24 @@ const authOptions = {
         return false;
       }
     },
-    async session({ session }: any) {
-      if (session.user?.email) {
-        const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+    async session({ session, token }: any) {
+      if (token?.email) {
+        const user = await prisma.user.findUnique({ where: { email: token.email } });
         if (user) {
           session.user.role = user.role;
           session.user.id = user.id;
           session.user.identityProvider = user.identityProvider;
+          session.user.email = user.email;
+          session.user.name = user.name;
         }
       }
       return session;
+    },
+    async jwt({ token, user }: any) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
     },
     async redirect({ url, baseUrl }: any) {
       if (url.startsWith("/")) return `${baseUrl}${url}`;
@@ -98,7 +109,7 @@ const authOptions = {
     },
   },
   pages: { signIn: "/auth/signin" },
-} as const;
+};
 
 export const { handlers } = NextAuth(authOptions);
 export const { GET, POST } = handlers;
