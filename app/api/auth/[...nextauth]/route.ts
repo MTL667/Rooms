@@ -30,7 +30,7 @@ const authOptions = {
   providers,
   trustHost: true,
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
   },
   callbacks: {
     async signIn({ user, account, profile }: any) {
