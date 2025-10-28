@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import AzureAD from "next-auth/providers/azure-ad";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
 const providers = [
@@ -25,6 +26,7 @@ if (process.env.EMAIL_SERVER && process.env.EMAIL_FROM) {
 }
 
 const authOptions = {
+  adapter: PrismaAdapter(prisma),
   providers,
   trustHost: true,
   callbacks: {
