@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  EXTERNAL
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum IdentityProvider {
+  MICROSOFT
+  MANUAL
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
+model AllowedTenant {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenantId  String   @unique
+  name      String?
+  active    Boolean  @default(true)
+}
+
+model User {
+  id               String           @id @default(cuid())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  email            String           @unique
+  name             String?
+  role             Role             @default(EXTERNAL)
+  identityProvider IdentityProvider @default(MANUAL)
+  msTenantId       String?
+  msOid            String?
+  twoFactorEnabled Boolean          @default(false)
+  totpSecret       String?
+  recoveryCodes    String?
+  status           UserStatus       @default(INVITED)
+  bookings         Booking[]
+}
+
+model Room {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  name            String
+  capacity        Int
+  location        String?
+  msResourceEmail String?
+  hourlyRateCents Int      @default(0)
+  active          Boolean  @default(true)
+  bookings        Booking[]
+}
+
+model Booking {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  roomId        String
+  room          Room     @relation(fields: [roomId], references: [id])
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  externalEmail String?
+  title         String
+  description   String?
+  start         DateTime
+  end           DateTime
+  status        BookingStatus @default(PENDING)
+  msEventId     String?
+  msICalUid     String?
+}
