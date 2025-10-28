@@ -18,10 +18,15 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
+# Copy standalone Next.js app
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
-COPY --from=build /app/prisma ./prisma
 
+# Copy Prisma schema and generated client
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+
+# Create entrypoint script inline
 RUN echo '#!/bin/sh' > /entrypoint.sh && \
     echo 'set -e' >> /entrypoint.sh && \
     echo 'if [ -n "$DATABASE_URL" ]; then' >> /entrypoint.sh && \
