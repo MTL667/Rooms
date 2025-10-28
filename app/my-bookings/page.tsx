@@ -1,126 +1,154 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 interface Booking {
   id: string;
   title: string;
+  room: { name: string; location: string | null };
   start: string;
   end: string;
   status: string;
-  description?: string;
-  room: {
-    name: string;
-  };
 }
 
-export default function MyBookingsPage() {
+export default function MyBookings() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/me/bookings')
-      .then(res => res.json())
-      .then(data => {
-        setBookings(data.bookings || []);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching bookings:', err);
-        setLoading(false);
-      });
-  }, []);
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
+    }
+  }, [status, router]);
 
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      CONFIRMED: 'bg-green-100 text-green-800',
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      CANCELLED: 'bg-red-100 text-red-800',
-    };
-    return styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-800';
-  };
+  useEffect(() => {
+    if (session) {
+      fetch('/api/me/bookings')
+        .then(res => res.json())
+        .then(data => {
+          setBookings(data.bookings || []);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error fetching bookings:', err);
+          setLoading(false);
+        });
+    }
+  }, [session]);
 
-  if (loading) {
+  if (status === 'loading') {
     return (
-      <main className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">My Bookings</h1>
-          <p>Loading...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-700 font-semibold">Loading...</p>
         </div>
-      </main>
+      </div>
     );
   }
 
-  const upcomingBookings = bookings.filter(b => new Date(b.end) > new Date());
-  const pastBookings = bookings.filter(b => new Date(b.end) <= new Date());
+  if (!session) return null;
+
+  const now = new Date();
+  const upcoming = bookings.filter(b => new Date(b.end) > now);
+  const past = bookings.filter(b => new Date(b.end) <= now);
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">My Bookings</h1>
-          <Link href="/rooms" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-            Book a Room
-          </Link>
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Vibrant Header */}
+        <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 text-white py-4 px-6 rounded-xl shadow-lg mb-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-lg">
+                <span className="text-2xl">📅</span>
+              </div>
+              <h1 className="text-3xl font-bold">My Bookings</h1>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-semibold px-4 py-2 rounded-lg transition-all"
+              >
+                🏠 Dashboard
+              </button>
+              <button
+                onClick={() => router.push('/auth/signout')}
+                className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all"
+              >
+                🚪 Sign Out
+              </button>
+            </div>
+          </div>
         </div>
-        
-        {bookings.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <p className="text-gray-600 mb-4">You have no bookings yet.</p>
-            <Link href="/rooms" className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-              Book Your First Room
-            </Link>
+
+        {loading ? (
+          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-700 font-semibold text-lg">Loading bookings...</p>
           </div>
         ) : (
           <div className="space-y-6">
-            {upcomingBookings.length > 0 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-4 text-gray-700">Upcoming</h2>
-                <div className="space-y-4">
-                  {upcomingBookings.map((booking) => (
-                    <div key={booking.id} className="bg-white rounded-lg shadow-md p-6">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold mb-2">{booking.title}</h3>
-                          <p className="text-gray-600 mb-2">{booking.room?.name}</p>
-                          <p className="text-sm text-gray-500">
-                            📅 {new Date(booking.start).toLocaleDateString()} 
-                            {' '} {new Date(booking.start).toLocaleTimeString()} 
-                            - {new Date(booking.end).toLocaleTimeString()}
-                          </p>
-                          {booking.description && (
-                            <p className="text-gray-600 mt-3 italic">{booking.description}</p>
-                          )}
-                        </div>
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusBadge(booking.status)}`}>
-                          {booking.status}
+            {/* Upcoming Bookings */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="bg-gradient-to-r from-green-400 to-emerald-500 text-white px-3 py-1 rounded-lg text-lg">
+                  ✅
+                </span>
+                Upcoming ({upcoming.length})
+              </h2>
+              {upcoming.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-lg p-12 text-center border-2 border-green-200">
+                  <div className="text-4xl mb-3">📅</div>
+                  <p className="text-gray-600 font-semibold">No upcoming bookings</p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {upcoming.map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-lg p-6 border-2 border-green-200 hover:shadow-xl transition-all"
+                    >
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{booking.title}</h3>
+                      <p className="text-gray-700 mb-3">🏢 {booking.room.name}</p>
+                      <div className="flex gap-4 text-sm">
+                        <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg font-semibold">
+                          📅 {new Date(booking.start).toLocaleDateString()}
+                        </span>
+                        <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg font-semibold">
+                          🕐 {new Date(booking.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            {pastBookings.length > 0 && (
+            {/* Past Bookings */}
+            {past.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold mb-4 text-gray-700">Past</h2>
-                <div className="space-y-4">
-                  {pastBookings.map((booking) => (
-                    <div key={booking.id} className="bg-white rounded-lg shadow-md p-6 opacity-75">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold mb-2">{booking.title}</h3>
-                          <p className="text-gray-600 mb-2">{booking.room?.name}</p>
-                          <p className="text-sm text-gray-500">
-                            📅 {new Date(booking.start).toLocaleDateString()} 
-                            {' '} {new Date(booking.start).toLocaleTimeString()} 
-                            - {new Date(booking.end).toLocaleTimeString()}
-                          </p>
-                        </div>
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusBadge(booking.status)}`}>
-                          {booking.status}
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="bg-gradient-to-r from-gray-400 to-gray-500 text-white px-3 py-1 rounded-lg text-lg">
+                    📜
+                  </span>
+                  Past ({past.length})
+                </h2>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {past.map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl shadow-lg p-6 border-2 border-gray-200"
+                    >
+                      <h3 className="text-xl font-bold text-gray-700 mb-2">{booking.title}</h3>
+                      <p className="text-gray-600 mb-3">🏢 {booking.room.name}</p>
+                      <div className="flex gap-4 text-sm">
+                        <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-lg font-semibold">
+                          {new Date(booking.start).toLocaleDateString()}
                         </span>
                       </div>
                     </div>

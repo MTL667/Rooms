@@ -45,8 +45,11 @@ export default function DashboardPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-700 font-semibold">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -56,47 +59,58 @@ export default function DashboardPage() {
   const timeSlots = Array.from({ length: 24 }, (_, i) => i);
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Rooms Availability</h1>
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+      {/* Vibrant Header Bar */}
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white py-3 px-4 rounded-lg mb-6 shadow-lg">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-2 rounded-lg">
+              <span className="text-2xl">🏢</span>
+            </div>
+            <h1 className="text-2xl font-bold">Rooms Availability</h1>
+          </div>
           <div className="flex gap-2">
             {session?.user?.role === 'ADMIN' && (
               <button
                 onClick={() => router.push('/admin')}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+                className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-semibold px-4 py-2 rounded-lg transition-all"
               >
-                Admin Panel
+                👨‍💼 Admin
               </button>
             )}
             <button
               onClick={() => router.push('/my-bookings')}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-semibold px-4 py-2 rounded-lg transition-all"
             >
-              My Bookings
+              📅 My Bookings
             </button>
             <button
               onClick={() => router.push('/auth/signout')}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all"
             >
-              Sign Out
+              🚪 Sign Out
             </button>
           </div>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto">
         {loading ? (
-          <p>Loading rooms...</p>
+          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-700 font-semibold text-lg">Loading rooms...</p>
+          </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <div className="bg-white rounded-xl shadow-xl overflow-hidden border-2 border-indigo-100">
             <div className="min-w-full">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr>
-                    <th className="border border-gray-300 p-2 sticky left-0 bg-white z-10 min-w-[200px]">
-                      Room
+                  <tr className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                    <th className="border-r border-white/20 p-4 sticky left-0 bg-gradient-to-r from-indigo-600 to-purple-600 z-10 min-w-[200px] font-bold text-left">
+                      🏢 Room
                     </th>
                     {timeSlots.map((hour) => (
-                      <th key={hour} className="border border-gray-300 p-2 text-sm text-center">
+                      <th key={hour} className="border border-white/20 p-2 text-sm text-center font-semibold">
                         {hour}:00
                       </th>
                     ))}
@@ -113,24 +127,24 @@ export default function DashboardPage() {
                     };
 
                     return (
-                      <tr key={room.id}>
-                        <td className="border border-gray-300 p-3 sticky left-0 bg-white z-10">
-                          <div className="font-semibold">{room.name}</div>
-                          <div className="text-sm text-gray-600">{room.location}</div>
-                          <div className="text-sm text-gray-500">Capacity: {room.capacity}</div>
+                      <tr key={room.id} className="hover:bg-indigo-50 transition-colors">
+                        <td className="border border-gray-200 p-4 sticky left-0 bg-white z-10 border-r-2 border-indigo-300">
+                          <div className="font-bold text-indigo-900 text-lg">{room.name}</div>
+                          <div className="text-sm text-gray-600 font-medium">{room.location}</div>
+                          <div className="text-sm text-purple-600 font-semibold">👥 {room.capacity} people</div>
                         </td>
                         {timeSlots.map((hour) => {
                           const booking = getBookingForHour(hour);
                           return (
                             <td
                               key={hour}
-                              className={`border border-gray-200 p-2 text-center text-xs ${
+                              className={`border border-gray-200 p-2 text-center text-xs font-semibold transition-all ${
                                 booking
-                                  ? 'bg-red-100 text-red-800 font-semibold'
-                                  : 'bg-green-50 text-green-800'
+                                  ? 'bg-gradient-to-br from-red-100 to-pink-100 text-red-700'
+                                  : 'bg-gradient-to-br from-green-100 to-emerald-50 text-green-700'
                               }`}
                             >
-                              {booking ? '🔴 Busy' : '🟢 Free'}
+                              {booking ? '🔴' : '🟢'}
                             </td>
                           );
                         })}
@@ -144,14 +158,16 @@ export default function DashboardPage() {
         )}
 
         {rooms.length === 0 && !loading && (
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <p className="text-gray-600 mb-4">No rooms available yet.</p>
+          <div className="bg-white rounded-xl shadow-xl p-12 text-center border-2 border-indigo-200">
+            <div className="text-6xl mb-4">🏢</div>
+            <p className="text-gray-700 font-bold text-xl mb-2">No rooms available yet.</p>
+            <p className="text-gray-500 mb-6">Get started by adding your first room.</p>
             {session?.user?.role === 'ADMIN' && (
               <button
                 onClick={() => router.push('/admin')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold px-8 py-3 rounded-lg shadow-lg transition-all transform hover:scale-105"
               >
-                Add Rooms
+                ➕ Add Rooms
               </button>
             )}
           </div>
