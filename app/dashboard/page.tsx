@@ -56,7 +56,8 @@ export default function DashboardPage() {
 
   if (!session) return null;
 
-  const timeSlots = Array.from({ length: 24 }, (_, i) => i);
+  // Show only hours from 6:00 to 22:00
+  const timeSlots = Array.from({ length: 17 }, (_, i) => i + 6);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
