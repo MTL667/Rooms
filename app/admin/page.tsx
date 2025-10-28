@@ -29,7 +29,15 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Admin Panel</h1>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+          >
+            Dashboard
+          </button>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <button
@@ -37,7 +45,7 @@ export default function AdminPage() {
             className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow p-6 text-left transition-colors"
           >
             <div className="text-2xl font-semibold mb-2">🧑‍💼 Tenants</div>
-            <p className="text-purple-100">
+            <p className="text-purple-100 text-sm">
               Manage allowed Azure AD tenants
             </p>
           </button>
@@ -47,7 +55,7 @@ export default function AdminPage() {
             className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow p-6 text-left transition-colors"
           >
             <div className="text-2xl font-semibold mb-2">👥 Users</div>
-            <p className="text-blue-100">
+            <p className="text-blue-100 text-sm">
               Manage users and permissions
             </p>
           </button>
@@ -57,29 +65,27 @@ export default function AdminPage() {
             className="bg-green-600 hover:bg-green-700 text-white rounded-lg shadow p-6 text-left transition-colors"
           >
             <div className="text-2xl font-semibold mb-2">🏢 Rooms</div>
-            <p className="text-green-100">
+            <p className="text-green-100 text-sm">
               Configure meeting rooms
             </p>
           </button>
 
-          <div className="bg-gray-600 text-white rounded-lg shadow p-6">
+          <div className="bg-gray-600 text-white rounded-lg shadow p-6 opacity-75">
             <div className="text-2xl font-semibold mb-2">⚙️ Settings</div>
-            <p className="text-gray-300">
-              System configuration
+            <p className="text-gray-300 text-sm">
+              System configuration (coming soon)
             </p>
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="flex gap-4">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-            >
-              Back to Dashboard
-            </button>
-          </div>
+          <h2 className="text-xl font-semibold mb-4">System Info</h2>
+          <p className="text-gray-600 text-sm">
+            Logged in as: <strong>{session?.user?.email}</strong>
+          </p>
+          <p className="text-gray-600 text-sm">
+            Role: <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">{session?.user?.role}</span>
+          </p>
         </div>
       </div>
     </main>
