@@ -10,6 +10,7 @@ interface Room {
   location: string | null;
   capacity: number;
   bookings: Array<{
+    id: string;
     start: string;
     end: string;
     title: string;
