@@ -43,7 +43,8 @@ export default function DashboardPage() {
 
   const loadRooms = () => {
     if (!session) return;
-    fetch('/api/rooms', { cache: 'no-store' })
+    const dateString = selectedDate.toISOString().split('T')[0];
+    fetch(`/api/rooms?date=${dateString}`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         setRooms(data.rooms || []);
@@ -59,6 +60,11 @@ export default function DashboardPage() {
     setSelectedRoom(room);
     setShowBookingModal(true);
     setBookingError(null);
+    // Set booking form date to currently selected date
+    setBookingForm(prev => ({
+      ...prev,
+      date: selectedDate.toISOString().split('T')[0],
+    }));
   };
 
   const handleSubmitBooking = async (e: React.FormEvent) => {
@@ -143,13 +149,6 @@ export default function DashboardPage() {
     });
   };
 
-  // Filter bookings for selected date
-  const filterBookingsForDate = (bookings: Array<{ id: string; start: string; end: string; title: string; }>) => {
-    return bookings.filter(booking => {
-      const bookingDate = new Date(booking.start);
-      return bookingDate.toDateString() === selectedDate.toDateString();
-    });
-  };
 
   useEffect(() => {
     if (session) {
@@ -293,11 +292,8 @@ export default function DashboardPage() {
                 </thead>
                 <tbody>
                   {rooms.map((room) => {
-                    // Filter bookings for selected date
-                    const filteredBookings = filterBookingsForDate(room.bookings || []);
-                    
                     // Calculate position and width for each booking as a percentage
-                    const bookingsWithPositions = filteredBookings.map((booking) => {
+                    const bookingsWithPositions = (room.bookings || []).map((booking) => {
                       const start = new Date(booking.start);
                       const end = new Date(booking.end);
                       const startHour = start.getHours() + start.getMinutes() / 60;
