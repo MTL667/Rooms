@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getToken } from "next-auth/jwt";
 
 export async function GET(req: Request) {
   try {
-    // Get authenticated user
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    // Get user email from query params
+    const { searchParams } = new URL(req.url);
+    const userEmail = searchParams.get('email');
     
-    if (!token || !token.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userEmail) {
+      return NextResponse.json({ error: "Email required" }, { status: 400 });
     }
-
-    const userEmail = token.email as string;
 
     // Find user
     const user = await prisma.user.findUnique({

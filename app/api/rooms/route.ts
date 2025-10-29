@@ -38,6 +38,8 @@ export async function GET(req: Request) {
             start: true,
             end: true,
             title: true,
+            description: true,
+            userId: true,
           },
         },
       },

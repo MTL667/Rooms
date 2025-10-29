@@ -26,8 +26,8 @@ export default function MyBookings() {
   }, [status, router]);
 
   useEffect(() => {
-    if (session) {
-      fetch('/api/me/bookings')
+    if (session?.user?.email) {
+      fetch(`/api/me/bookings?email=${encodeURIComponent(session.user.email)}`)
         .then(res => res.json())
         .then(data => {
           setBookings(data.bookings || []);

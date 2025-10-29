@@ -4,17 +4,21 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
+interface Booking {
+  id: string;
+  start: string;
+  end: string;
+  title: string;
+  description: string | null;
+  userId: string;
+}
+
 interface Room {
   id: string;
   name: string;
   location: string | null;
   capacity: number;
-  bookings: Array<{
-    id: string;
-    start: string;
-    end: string;
-    title: string;
-  }>;
+  bookings: Booking[];
 }
 
 export default function DashboardPage() {
@@ -25,6 +29,7 @@ export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [bookingForm, setBookingForm] = useState({
     title: '',
     description: '',
@@ -58,13 +63,60 @@ export default function DashboardPage() {
 
   const handleBookRoom = (room: Room) => {
     setSelectedRoom(room);
+    setEditingBooking(null);
     setShowBookingModal(true);
     setBookingError(null);
     // Set booking form date to currently selected date
-    setBookingForm(prev => ({
-      ...prev,
+    setBookingForm({
+      title: '',
+      description: '',
       date: selectedDate.toISOString().split('T')[0],
-    }));
+      startTime: '',
+      endTime: '',
+    });
+  };
+
+  const handleEditBooking = (booking: Booking, room: Room) => {
+    setEditingBooking(booking);
+    setSelectedRoom(room);
+    setShowBookingModal(true);
+    setBookingError(null);
+    
+    const startDate = new Date(booking.start);
+    const endDate = new Date(booking.end);
+    
+    setBookingForm({
+      title: booking.title,
+      description: booking.description || '',
+      date: startDate.toISOString().split('T')[0],
+      startTime: startDate.toTimeString().slice(0, 5),
+      endTime: endDate.toTimeString().slice(0, 5),
+    });
+  };
+
+  const handleDeleteBooking = async () => {
+    if (!editingBooking || !confirm('Weet je zeker dat je deze booking wilt verwijderen?')) return;
+
+    try {
+      const res = await fetch(`/api/bookings/${editingBooking.id}?userEmail=${encodeURIComponent(session?.user?.email || '')}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete booking');
+      }
+
+      setBookingSuccess(true);
+      setTimeout(() => {
+        setShowBookingModal(false);
+        setEditingBooking(null);
+        setSelectedRoom(null);
+        setBookingSuccess(false);
+        loadRooms();
+      }, 1500);
+    } catch (error: any) {
+      setBookingError(error.message);
+    }
   };
 
   const handleSubmitBooking = async (e: React.FormEvent) => {
@@ -77,29 +129,48 @@ export default function DashboardPage() {
       const start = new Date(`${bookingForm.date}T${bookingForm.startTime}`);
       const end = new Date(`${bookingForm.date}T${bookingForm.endTime}`);
 
-      const res = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomId: selectedRoom.id,
-          title: bookingForm.title,
-          description: bookingForm.description,
-          start: start.toISOString(),
-          end: end.toISOString(),
-          userEmail: session?.user?.email,
-        }),
-      });
+      let res;
+      if (editingBooking) {
+        // Update existing booking
+        res = await fetch(`/api/bookings/${editingBooking.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId: selectedRoom.id,
+            title: bookingForm.title,
+            description: bookingForm.description,
+            start: start.toISOString(),
+            end: end.toISOString(),
+            userEmail: session?.user?.email,
+          }),
+        });
+      } else {
+        // Create new booking
+        res = await fetch('/api/bookings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId: selectedRoom.id,
+            title: bookingForm.title,
+            description: bookingForm.description,
+            start: start.toISOString(),
+            end: end.toISOString(),
+            userEmail: session?.user?.email,
+          }),
+        });
+      }
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to create booking');
+        throw new Error(data.error || `Failed to ${editingBooking ? 'update' : 'create'} booking`);
       }
 
       setBookingSuccess(true);
       setTimeout(() => {
         setShowBookingModal(false);
         setSelectedRoom(null);
+        setEditingBooking(null);
         setBookingSuccess(false);
         setBookingForm({
           title: '',
@@ -342,27 +413,34 @@ export default function DashboardPage() {
                           </div>
                           
                           {/* Booking bars */}
-                          {bookingsWithPositions.map((booking, idx) => (
-                            <div
-                              key={booking.id}
-                              className="absolute top-1 bottom-1 bg-gradient-to-r from-red-500/80 to-pink-500/80 backdrop-blur-sm border-2 border-red-400/40 rounded-lg shadow-lg flex items-center justify-center overflow-hidden group hover:shadow-xl transition-all cursor-pointer"
-                              style={{
-                                left: `${booking.startPos}%`,
-                                width: `${booking.width}%`,
-                                zIndex: 10 + idx,
-                              }}
-                              title={`${booking.title}\n${booking.startTime} - ${booking.endTime}`}
-                            >
-                              <div className="text-white text-xs font-bold px-2 truncate">
-                                {booking.width > 8 && (
-                                  <span>{booking.startTime} - {booking.endTime}</span>
-                                )}
-                                {booking.width > 15 && (
-                                  <span className="ml-2">• {booking.title}</span>
-                                )}
+                          {bookingsWithPositions.map((booking, idx) => {
+                            const isOwner = booking.userId === session?.user?.id;
+                            return (
+                              <div
+                                key={booking.id}
+                                onClick={() => isOwner && handleEditBooking(booking, room)}
+                                className={`absolute top-1 bottom-1 bg-gradient-to-r from-red-500/80 to-pink-500/80 backdrop-blur-sm border-2 border-red-400/40 rounded-lg shadow-lg flex items-center justify-center overflow-hidden group hover:shadow-xl transition-all ${isOwner ? 'cursor-pointer hover:scale-105 hover:border-red-300' : 'cursor-default'}`}
+                                style={{
+                                  left: `${booking.startPos}%`,
+                                  width: `${booking.width}%`,
+                                  zIndex: 10 + idx,
+                                }}
+                                title={`${booking.title}\n${booking.startTime} - ${booking.endTime}${isOwner ? '\n\nKlik om te bewerken' : ''}`}
+                              >
+                                <div className="text-white text-xs font-bold px-2 truncate flex items-center gap-1">
+                                  {isOwner && booking.width > 5 && (
+                                    <span className="text-yellow-300">✏️</span>
+                                  )}
+                                  {booking.width > 8 && (
+                                    <span>{booking.startTime} - {booking.endTime}</span>
+                                  )}
+                                  {booking.width > 15 && (
+                                    <span className="ml-2">• {booking.title}</span>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                           
                           {/* Show "Free" if no bookings */}
                           {bookingsWithPositions.length === 0 && (
@@ -404,12 +482,15 @@ export default function DashboardPage() {
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">📅 Boek {selectedRoom.name}</h2>
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    {editingBooking ? '✏️ Bewerk' : '📅 Boek'} {selectedRoom.name}
+                  </h2>
                   <p className="text-teal-200 text-sm">{selectedRoom.location} • 👥 {selectedRoom.capacity} personen</p>
                 </div>
                 <button
                   onClick={() => {
                     setShowBookingModal(false);
+                    setEditingBooking(null);
                     setBookingError(null);
                   }}
                   className="text-white hover:text-teal-300 text-2xl font-bold"
@@ -491,16 +572,26 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex gap-2 pt-4">
+                    {editingBooking && (
+                      <button
+                        type="button"
+                        onClick={handleDeleteBooking}
+                        className="bg-red-500/60 hover:bg-red-600/70 backdrop-blur-md border border-red-400/30 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                      >
+                        🗑️
+                      </button>
+                    )}
                     <button
                       type="submit"
                       className="flex-1 bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white font-bold py-3 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:scale-105"
                     >
-                      ✅ Bevestigen
+                      {editingBooking ? '💾 Opslaan' : '✅ Bevestigen'}
                     </button>
                     <button
                       type="button"
                       onClick={() => {
                         setShowBookingModal(false);
+                        setEditingBooking(null);
                         setBookingError(null);
                       }}
                       className="flex-1 bg-gray-600/60 hover:bg-gray-700/70 backdrop-blur-md border border-gray-400/30 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
