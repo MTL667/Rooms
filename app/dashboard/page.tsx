@@ -173,16 +173,20 @@ export default function DashboardPage() {
     
     // Calculate the new start time based on drop position
     const clickedHour = startHour + (relativeX * totalHours);
-    const clickedMinutes = Math.round((clickedHour % 1) * 4) * 15; // Snap to 15-minute intervals
-    const clickedHourFloor = Math.floor(clickedHour);
+    
+    // Snap to 15-minute intervals
+    const totalMinutesFromStart = clickedHour * 60;
+    const snappedMinutes = Math.round(totalMinutesFromStart / 15) * 15;
+    const clickedHourFloor = Math.floor(snappedMinutes / 60);
+    const clickedMinutes = snappedMinutes % 60;
     
     // Calculate booking duration
     const originalStart = new Date(booking.start);
     const originalEnd = new Date(booking.end);
     const durationMs = originalEnd.getTime() - originalStart.getTime();
     
-    // Create new start time
-    const newStart = new Date(selectedDate);
+    // Create new start time - use the booking's original date to preserve the day
+    const newStart = new Date(booking.start);
     newStart.setHours(clickedHourFloor, clickedMinutes, 0, 0);
     
     // Create new end time (preserve duration)
