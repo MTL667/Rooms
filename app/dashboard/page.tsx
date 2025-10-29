@@ -765,7 +765,7 @@ export default function DashboardPage() {
                 <div className="bg-green-500/20 border border-green-500 rounded-lg p-6 text-center">
                   <div className="text-6xl mb-4">✅</div>
                   <p className="text-white font-bold text-xl">{t('bookingSuccessful')}</p>
-                  <p className="text-teal-200 mt-2">Je boeking is bevestigd</p>
+                  <p className="text-teal-200 mt-2">{t('bookingConfirmed')}</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmitBooking} className="space-y-4">
