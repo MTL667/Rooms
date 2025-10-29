@@ -71,6 +71,16 @@ export default function AdminPage() {
           </button>
 
           <button
+            onClick={() => router.push('/admin/floor-plans')}
+            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg shadow p-6 text-left transition-colors"
+          >
+            <div className="text-2xl font-semibold mb-2">🗺️ Floor Plans</div>
+            <p className="text-teal-100 text-sm">
+              Manage building floor plans
+            </p>
+          </button>
+
+          <button
             onClick={() => router.push('/admin/settings')}
             className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow p-6 text-left transition-colors"
           >

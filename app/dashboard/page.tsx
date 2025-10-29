@@ -84,6 +84,12 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-bold">Rooms Availability</h1>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => router.push('/floor-plan')}
+              className="bg-white/10 hover:bg-white/20 backdrop-blur border border-teal-400/30 text-white font-semibold px-4 py-2 rounded-lg transition-all"
+            >
+              🗺️ Plattegrond
+            </button>
             {session?.user?.role === 'ADMIN' && (
               <button
                 onClick={() => router.push('/admin')}

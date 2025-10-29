@@ -56,16 +56,32 @@ model User {
   bookings         Booking[]
 }
 
+model FloorPlan {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  building  String?
+  floor     String?
+  imageUrl  String
+  active    Boolean  @default(true)
+  rooms     Room[]
+}
+
 model Room {
-  id              String   @id @default(cuid())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id              String     @id @default(cuid())
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
   name            String
   capacity        Int
   location        String?
   msResourceEmail String?
-  hourlyRateCents Int      @default(0)
-  active          Boolean  @default(true)
+  hourlyRateCents Int        @default(0)
+  active          Boolean    @default(true)
+  floorPlanId     String?
+  floorPlan       FloorPlan? @relation(fields: [floorPlanId], references: [id])
+  positionX       Float?
+  positionY       Float?
   bookings        Booking[]
 }
 

@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
+interface FloorPlan {
+  id: string;
+  name: string;
+  imageUrl: string;
+}
+
 interface Room {
   id: string;
   name: string;
@@ -13,6 +19,9 @@ interface Room {
   hourlyRateCents: number;
   active: boolean;
   createdAt: string;
+  floorPlanId: string | null;
+  positionX: number | null;
+  positionY: number | null;
   _count: { bookings: number };
 }
 
@@ -20,6 +29,7 @@ export default function RoomsManagement() {
   const { data: session } = useSession();
   const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -28,7 +38,11 @@ export default function RoomsManagement() {
     capacity: 10,
     msResourceEmail: '',
     active: true,
+    floorPlanId: '',
+    positionX: null as number | null,
+    positionY: null as number | null,
   });
+  const [showPositionPicker, setShowPositionPicker] = useState(false);
 
   useEffect(() => {
     if (session?.user?.role !== 'ADMIN') {
@@ -36,6 +50,7 @@ export default function RoomsManagement() {
       return;
     }
     loadRooms();
+    loadFloorPlans();
   }, [session, router]);
 
   const loadRooms = async () => {
@@ -50,6 +65,16 @@ export default function RoomsManagement() {
     }
   };
 
+  const loadFloorPlans = async () => {
+    try {
+      const res = await fetch('/api/admin/floor-plans');
+      const data = await res.json();
+      setFloorPlans(data.floorPlans || []);
+    } catch (error) {
+      console.error('Error loading floor plans:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -59,11 +84,15 @@ export default function RoomsManagement() {
         body: JSON.stringify({
           ...formData,
           msResourceEmail: formData.msResourceEmail || null,
+          floorPlanId: formData.floorPlanId || null,
+          positionX: formData.positionX,
+          positionY: formData.positionY,
         }),
       });
       loadRooms();
       setShowForm(false);
-      setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true });
+      setShowPositionPicker(false);
+      setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null });
     } catch (error) {
       console.error('Error creating room:', error);
     }
@@ -148,6 +177,51 @@ export default function RoomsManagement() {
                   placeholder="room-a@example.com"
                 />
               </div>
+              
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">🗺️ Floor Plan (optioneel)</label>
+                <select
+                  value={formData.floorPlanId}
+                  onChange={(e) => setFormData({ ...formData, floorPlanId: e.target.value })}
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 text-gray-900"
+                >
+                  <option value="">Geen plattegrond</option>
+                  {floorPlans.map((fp) => (
+                    <option key={fp.id} value={fp.id}>{fp.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {formData.floorPlanId && (
+                <div className="border-2 border-teal-300 rounded-lg p-4 bg-teal-50">
+                  <label className="block text-sm font-semibold mb-2 text-gray-900">
+                    📍 Positie op Plattegrond
+                  </label>
+                  {formData.positionX !== null && formData.positionY !== null ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">
+                        X: {formData.positionX.toFixed(1)}%, Y: {formData.positionY.toFixed(1)}%
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowPositionPicker(true)}
+                        className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                      >
+                        🎯 Wijzig Positie
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowPositionPicker(true)}
+                      className="w-full bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg font-semibold"
+                    >
+                      🎯 Klik om Positie te Selecteren
+                    </button>
+                  )}
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -210,6 +284,70 @@ export default function RoomsManagement() {
           )}
         </div>
       </div>
+
+      {/* Position Picker Modal */}
+      {showPositionPicker && formData.floorPlanId && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">🎯 Selecteer Kamer Positie</h2>
+                <button
+                  onClick={() => setShowPositionPicker(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Klik op de plattegrond waar de kamer zich bevindt
+              </p>
+              <div className="border-4 border-teal-500 rounded-lg overflow-hidden relative">
+                <img
+                  src={floorPlans.find(fp => fp.id === formData.floorPlanId)?.imageUrl}
+                  alt="Floor plan"
+                  className="w-full cursor-crosshair"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    setFormData({ ...formData, positionX: x, positionY: y });
+                  }}
+                />
+                {formData.positionX !== null && formData.positionY !== null && (
+                  <div
+                    className="absolute w-8 h-8 bg-red-500 border-4 border-white rounded-full shadow-lg transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-white font-bold"
+                    style={{
+                      left: `${formData.positionX}%`,
+                      top: `${formData.positionY}%`,
+                    }}
+                  >
+                    📍
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 flex justify-between items-center">
+                <div className="text-sm text-gray-600">
+                  {formData.positionX !== null && formData.positionY !== null ? (
+                    <span className="font-semibold">
+                      Positie: X: {formData.positionX.toFixed(1)}%, Y: {formData.positionY.toFixed(1)}%
+                    </span>
+                  ) : (
+                    <span>Klik op de plattegrond om een positie te selecteren</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowPositionPicker(false)}
+                  disabled={formData.positionX === null || formData.positionY === null}
+                  className="bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition-all"
+                >
+                  ✅ Bevestigen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

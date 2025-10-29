@@ -1,0 +1,262 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+
+interface FloorPlan {
+  id: string;
+  name: string;
+  building: string | null;
+  floor: string | null;
+  imageUrl: string;
+  active: boolean;
+  createdAt: string;
+  _count: { rooms: number };
+}
+
+export default function FloorPlansManagement() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    building: '',
+    floor: '',
+    imageUrl: '',
+    active: true,
+  });
+
+  useEffect(() => {
+    if (session?.user?.role !== 'ADMIN') {
+      router.push('/dashboard');
+      return;
+    }
+    loadFloorPlans();
+  }, [session, router]);
+
+  const loadFloorPlans = async () => {
+    try {
+      const res = await fetch('/api/admin/floor-plans');
+      const data = await res.json();
+      setFloorPlans(data.floorPlans || []);
+    } catch (error) {
+      console.error('Error loading floor plans:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await fetch('/api/admin/floor-plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      loadFloorPlans();
+      setShowForm(false);
+      setFormData({ name: '', building: '', floor: '', imageUrl: '', active: true });
+    } catch (error) {
+      console.error('Error creating floor plan:', error);
+    }
+  };
+
+  const deleteFloorPlan = async (id: string) => {
+    if (!confirm('Plattegrond verwijderen? Dit zal de koppeling met rooms verwijderen.')) return;
+    try {
+      await fetch(`/api/admin/floor-plans/${id}`, { method: 'DELETE' });
+      loadFloorPlans();
+    } catch (error) {
+      console.error('Error deleting floor plan:', error);
+    }
+  };
+
+  if (loading) return <div className="p-6 bg-white">Laden...</div>;
+
+  return (
+    <main className="p-6 bg-white min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Plattegronden Beheer</h1>
+            <p className="text-gray-600 mt-1">Beheer gebouw plattegronden voor room visualisatie</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-md"
+            >
+              {showForm ? '❌ Annuleren' : '➕ Nieuwe Plattegrond'}
+            </button>
+            <button
+              onClick={() => router.push('/admin')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-semibold transition-all"
+            >
+              ⬅️ Terug
+            </button>
+          </div>
+        </div>
+
+        {showForm && (
+          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-6 mb-6 shadow-lg border border-teal-200">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Nieuwe Plattegrond</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Naam *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    placeholder="Bijvoorbeeld: Hoofdgebouw Verdieping 1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Gebouw</label>
+                  <input
+                    type="text"
+                    value={formData.building}
+                    onChange={(e) => setFormData({ ...formData, building: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    placeholder="Hoofdgebouw"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Verdieping</label>
+                  <input
+                    type="text"
+                    value={formData.floor}
+                    onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    placeholder="1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Actief</label>
+                  <select
+                    value={formData.active.toString()}
+                    onChange={(e) => setFormData({ ...formData, active: e.target.value === 'true' })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  >
+                    <option value="true">Ja</option>
+                    <option value="false">Nee</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Afbeelding URL * 
+                  <span className="text-gray-500 font-normal ml-2">(Upload naar een hosting service en plak de URL hier)</span>
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  placeholder="https://example.com/floorplan.png"
+                />
+                {formData.imageUrl && (
+                  <div className="mt-3 border border-gray-200 rounded-lg p-2">
+                    <img 
+                      src={formData.imageUrl} 
+                      alt="Preview" 
+                      className="max-h-48 mx-auto"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3E❌ Invalid URL%3C/text%3E%3C/svg%3E';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg"
+              >
+                💾 Opslaan
+              </button>
+            </form>
+          </div>
+        )}
+
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white">
+                <th className="px-6 py-4 text-left font-bold">Preview</th>
+                <th className="px-6 py-4 text-left font-bold">Naam</th>
+                <th className="px-6 py-4 text-left font-bold">Gebouw</th>
+                <th className="px-6 py-4 text-left font-bold">Verdieping</th>
+                <th className="px-6 py-4 text-left font-bold">Rooms</th>
+                <th className="px-6 py-4 text-left font-bold">Status</th>
+                <th className="px-6 py-4 text-left font-bold">Acties</th>
+              </tr>
+            </thead>
+            <tbody>
+              {floorPlans.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                    <div className="text-6xl mb-4">🗺️</div>
+                    <p className="text-xl font-semibold">Nog geen plattegronden</p>
+                    <p className="text-gray-400 mt-2">Klik op "Nieuwe Plattegrond" om te beginnen</p>
+                  </td>
+                </tr>
+              ) : (
+                floorPlans.map((fp) => (
+                  <tr key={fp.id} className="border-b border-gray-200 hover:bg-teal-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <img 
+                        src={fp.imageUrl} 
+                        alt={fp.name}
+                        className="h-16 w-auto rounded border border-gray-300"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="50"%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3E🗺️%3C/text%3E%3C/svg%3E';
+                        }}
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-gray-900">{fp.name}</div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">{fp.building || '-'}</td>
+                    <td className="px-6 py-4 text-gray-600">{fp.floor || '-'}</td>
+                    <td className="px-6 py-4">
+                      <span className="bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm font-semibold">
+                        {fp._count.rooms} rooms
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        fp.active 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {fp.active ? '✅ Actief' : '⏸️ Inactief'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => deleteFloorPlan(fp.id)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-all"
+                      >
+                        🗑️ Verwijderen
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  );
+}
+

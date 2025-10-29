@@ -29,6 +29,9 @@ export async function POST(req: Request) {
         msResourceEmail: data.msResourceEmail || null,
         hourlyRateCents: data.hourlyRateCents || 0,
         active: data.active ?? true,
+        floorPlanId: data.floorPlanId || null,
+        positionX: data.positionX ?? null,
+        positionY: data.positionY ?? null,
       },
     });
     return NextResponse.json({ room });
