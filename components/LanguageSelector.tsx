@@ -12,7 +12,7 @@ export default function LanguageSelector() {
   ];
 
   return (
-    <div className="fixed bottom-4 left-4 z-50">
+    <div className="fixed bottom-4 left-4 z-[9999]">
       <div className="bg-gradient-to-br from-teal-900/95 to-cyan-900/95 backdrop-blur-md border-2 border-teal-400/40 rounded-xl shadow-2xl p-2">
         <div className="flex gap-2">
           {languages.map((lang) => (
