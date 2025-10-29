@@ -161,22 +161,63 @@ export default function DashboardPage() {
 
     const { booking, sourceRoom } = draggingBooking;
 
-    // Don't do anything if dropped on same room
-    if (sourceRoom.id === targetRoom.id) {
+    // Get the drop position relative to the time grid
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const relativeX = x / rect.width; // 0 to 1
+    
+    // Calculate which time slot was clicked (6:00 to 22:00 = 16 hours)
+    const startHour = 6;
+    const endHour = 22;
+    const totalHours = endHour - startHour;
+    
+    // Calculate the new start time based on drop position
+    const clickedHour = startHour + (relativeX * totalHours);
+    const clickedMinutes = Math.round((clickedHour % 1) * 4) * 15; // Snap to 15-minute intervals
+    const clickedHourFloor = Math.floor(clickedHour);
+    
+    // Calculate booking duration
+    const originalStart = new Date(booking.start);
+    const originalEnd = new Date(booking.end);
+    const durationMs = originalEnd.getTime() - originalStart.getTime();
+    
+    // Create new start time
+    const newStart = new Date(selectedDate);
+    newStart.setHours(clickedHourFloor, clickedMinutes, 0, 0);
+    
+    // Create new end time (preserve duration)
+    const newEnd = new Date(newStart.getTime() + durationMs);
+    
+    // Check if new times are within business hours
+    const newStartHour = newStart.getHours() + newStart.getMinutes() / 60;
+    const newEndHour = newEnd.getHours() + newEnd.getMinutes() / 60;
+    
+    if (newStartHour < startHour || newEndHour > endHour) {
+      alert(t('bookingOutsideBusinessHours') || 'Booking moet binnen werktijden vallen (6:00-22:00)');
       setDraggingBooking(null);
       setDropTargetRoom(null);
       return;
     }
 
     try {
-      // Update booking to new room
+      // Update booking with new room and/or time
+      const updateData: any = {
+        userEmail: session.user.email,
+      };
+      
+      // Only update room if it changed
+      if (sourceRoom.id !== targetRoom.id) {
+        updateData.roomId = targetRoom.id;
+      }
+      
+      // Always update time based on drop position
+      updateData.start = newStart.toISOString();
+      updateData.end = newEnd.toISOString();
+
       const res = await fetch(`/api/bookings/${booking.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomId: targetRoom.id,
-          userEmail: session.user.email,
-        }),
+        body: JSON.stringify(updateData),
       });
 
       const data = await res.json();

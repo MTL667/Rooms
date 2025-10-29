@@ -36,6 +36,7 @@ export const translations = {
     delete: 'Verwijderen',
     bookingSuccessful: 'Boeking Succesvol!',
     bookingConfirmed: 'Je boeking is bevestigd',
+    bookingOutsideBusinessHours: 'Booking moet binnen werktijden vallen (6:00-22:00)',
     titlePlaceholder: 'Bijvoorbeeld: Team Meeting',
     descriptionPlaceholder: 'Optionele beschrijving...',
     
@@ -131,6 +132,7 @@ export const translations = {
     delete: 'Supprimer',
     bookingSuccessful: 'Réservation Réussie!',
     bookingConfirmed: 'Votre réservation est confirmée',
+    bookingOutsideBusinessHours: 'La réservation doit être dans les heures d\'ouverture (6:00-22:00)',
     titlePlaceholder: 'Par exemple: Réunion d\'équipe',
     descriptionPlaceholder: 'Description optionnelle...',
     
@@ -226,6 +228,7 @@ export const translations = {
     delete: 'Delete',
     bookingSuccessful: 'Booking Successful!',
     bookingConfirmed: 'Your booking is confirmed',
+    bookingOutsideBusinessHours: 'Booking must be within business hours (6:00-22:00)',
     titlePlaceholder: 'For example: Team Meeting',
     descriptionPlaceholder: 'Optional description...',
     
