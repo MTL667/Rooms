@@ -39,6 +39,8 @@ export default function DashboardPage() {
   });
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [draggingBooking, setDraggingBooking] = useState<{ booking: Booking; sourceRoom: Room } | null>(null);
+  const [dropTargetRoom, setDropTargetRoom] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -117,6 +119,75 @@ export default function DashboardPage() {
     } catch (error: any) {
       setBookingError(error.message);
     }
+  };
+
+  const handleDragStart = (booking: Booking, room: Room, e: React.DragEvent) => {
+    e.stopPropagation();
+    setDraggingBooking({ booking, sourceRoom: room });
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', booking.id);
+  };
+
+  const handleDragOver = (roomId: string, e: React.DragEvent) => {
+    if (!draggingBooking) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDropTargetRoom(roomId);
+  };
+
+  const handleDragLeave = (roomId: string) => {
+    if (dropTargetRoom === roomId) {
+      setDropTargetRoom(null);
+    }
+  };
+
+  const handleDrop = async (targetRoom: Room, e: React.DragEvent) => {
+    e.preventDefault();
+    if (!draggingBooking || !session?.user?.email) {
+      setDraggingBooking(null);
+      setDropTargetRoom(null);
+      return;
+    }
+
+    const { booking, sourceRoom } = draggingBooking;
+
+    // Don't do anything if dropped on same room
+    if (sourceRoom.id === targetRoom.id) {
+      setDraggingBooking(null);
+      setDropTargetRoom(null);
+      return;
+    }
+
+    try {
+      // Update booking to new room
+      const res = await fetch(`/api/bookings/${booking.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId: targetRoom.id,
+          userEmail: session.user.email,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to move booking');
+      }
+
+      // Success - reload rooms
+      loadRooms();
+    } catch (error: any) {
+      alert(`Kon booking niet verplaatsen: ${error.message}`);
+    } finally {
+      setDraggingBooking(null);
+      setDropTargetRoom(null);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggingBooking(null);
+    setDropTargetRoom(null);
   };
 
   const handleSubmitBooking = async (e: React.FormEvent) => {
@@ -384,7 +455,12 @@ export default function DashboardPage() {
                     });
 
                     return (
-                      <tr key={room.id} className="hover:bg-teal-900/20 transition-colors border-b border-teal-400/10">
+                      <tr 
+                        key={room.id} 
+                        className={`hover:bg-teal-900/20 transition-colors border-b border-teal-400/10 ${
+                          dropTargetRoom === room.id ? 'bg-cyan-500/20 ring-2 ring-cyan-400' : ''
+                        }`}
+                      >
                         <td className="border border-teal-400/20 p-4 sticky left-0 bg-gradient-to-br from-teal-900/40 to-cyan-900/40 z-10 border-r-2 border-teal-400/30">
                           <div className="flex justify-between items-start mb-2">
                             <div>
@@ -400,7 +476,17 @@ export default function DashboardPage() {
                             </button>
                           </div>
                         </td>
-                        <td colSpan={timeSlots.length} className="border border-teal-400/20 p-0 relative h-16 bg-gradient-to-br from-emerald-500/10 to-teal-500/10">
+                        <td 
+                          colSpan={timeSlots.length} 
+                          className={`border border-teal-400/20 p-0 relative h-16 transition-colors ${
+                            dropTargetRoom === room.id 
+                              ? 'bg-gradient-to-br from-cyan-500/30 to-teal-500/30' 
+                              : 'bg-gradient-to-br from-emerald-500/10 to-teal-500/10'
+                          }`}
+                          onDragOver={(e) => handleDragOver(room.id, e)}
+                          onDragLeave={() => handleDragLeave(room.id)}
+                          onDrop={(e) => handleDrop(room, e)}
+                        >
                           {/* Time grid lines */}
                           <div className="absolute inset-0 flex">
                             {timeSlots.map((hour, idx) => (
@@ -415,17 +501,23 @@ export default function DashboardPage() {
                           {/* Booking bars */}
                           {bookingsWithPositions.map((booking, idx) => {
                             const isOwner = booking.userId === session?.user?.id;
+                            const isDragging = draggingBooking?.booking.id === booking.id;
                             return (
                               <div
                                 key={booking.id}
-                                onClick={() => isOwner && handleEditBooking(booking, room)}
-                                className={`absolute top-1 bottom-1 bg-gradient-to-r from-red-500/80 to-pink-500/80 backdrop-blur-sm border-2 border-red-400/40 rounded-lg shadow-lg flex items-center justify-center overflow-hidden group hover:shadow-xl transition-all ${isOwner ? 'cursor-pointer hover:scale-105 hover:border-red-300' : 'cursor-default'}`}
+                                draggable={isOwner}
+                                onDragStart={(e) => isOwner && handleDragStart(booking, room, e)}
+                                onDragEnd={handleDragEnd}
+                                onClick={() => isOwner && !isDragging && handleEditBooking(booking, room)}
+                                className={`absolute top-1 bottom-1 bg-gradient-to-r from-red-500/80 to-pink-500/80 backdrop-blur-sm border-2 border-red-400/40 rounded-lg shadow-lg flex items-center justify-center overflow-hidden group hover:shadow-xl transition-all ${
+                                  isOwner ? 'cursor-move hover:scale-105 hover:border-red-300' : 'cursor-default'
+                                } ${isDragging ? 'opacity-50 scale-95' : ''}`}
                                 style={{
                                   left: `${booking.startPos}%`,
                                   width: `${booking.width}%`,
                                   zIndex: 10 + idx,
                                 }}
-                                title={`${booking.title}\n${booking.startTime} - ${booking.endTime}${isOwner ? '\n\nKlik om te bewerken' : ''}`}
+                                title={`${booking.title}\n${booking.startTime} - ${booking.endTime}${isOwner ? '\n\nKlik om te bewerken of sleep naar andere room' : ''}`}
                               >
                                 <div className="text-white text-xs font-bold px-2 truncate flex items-center gap-1">
                                   {isOwner && booking.width > 5 && (
