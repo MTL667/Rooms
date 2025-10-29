@@ -1,21 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getToken } from "next-auth/jwt";
 
 export async function POST(req: Request) {
   try {
-    // Check authentication using NextAuth JWT
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    
-    if (!token || !token.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const data = await req.json();
-    const { roomId, title, description, start, end } = data;
+    const { roomId, title, description, start, end, userEmail } = data;
 
-    // Use email from authenticated token
-    const userEmail = token.email as string;
+    // Validate user email
+    if (!userEmail) {
+      return NextResponse.json({ error: "User email is required" }, { status: 401 });
+    }
 
     // Validate required fields
     if (!roomId || !title || !start || !end) {
