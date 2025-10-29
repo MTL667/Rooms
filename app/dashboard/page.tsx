@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [bookingForm, setBookingForm] = useState({
@@ -108,6 +109,48 @@ export default function DashboardPage() {
     }
   };
 
+  const goToPreviousDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() - 1);
+    setSelectedDate(newDate);
+  };
+
+  const goToNextDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + 1);
+    setSelectedDate(newDate);
+  };
+
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(new Date(e.target.value));
+  };
+
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  const formatDisplayDate = (date: Date) => {
+    return date.toLocaleDateString('nl-NL', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  // Filter bookings for selected date
+  const filterBookingsForDate = (bookings: Array<{ id: string; start: string; end: string; title: string; }>) => {
+    return bookings.filter(booking => {
+      const bookingDate = new Date(booking.start);
+      return bookingDate.toDateString() === selectedDate.toDateString();
+    });
+  };
+
   useEffect(() => {
     if (session) {
       loadRooms();
@@ -120,7 +163,7 @@ export default function DashboardPage() {
         window.removeEventListener('focus', loadRooms);
       };
     }
-  }, [session]);
+  }, [session, selectedDate]);
 
   if (status === 'loading') {
     return (
@@ -149,7 +192,44 @@ export default function DashboardPage() {
             </div>
             <h1 className="text-2xl font-bold">Rooms Availability</h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-4 items-center flex-wrap">
+            {/* Date Navigation */}
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/30 rounded-xl px-4 py-2">
+              <button
+                onClick={goToPreviousDay}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                title="Vorige dag"
+              >
+                ←
+              </button>
+              
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={selectedDate.toISOString().split('T')[0]}
+                  onChange={handleDateChange}
+                  className="bg-white/10 text-white border border-white/40 rounded-lg px-3 py-1.5 font-semibold focus:outline-none focus:border-cyan-400 cursor-pointer"
+                />
+                
+                {!isToday(selectedDate) && (
+                  <button
+                    onClick={goToToday}
+                    className="bg-cyan-400/60 hover:bg-cyan-500/70 backdrop-blur-md border border-cyan-300/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 text-sm whitespace-nowrap"
+                  >
+                    📅 Vandaag
+                  </button>
+                )}
+              </div>
+
+              <button
+                onClick={goToNextDay}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                title="Volgende dag"
+              >
+                →
+              </button>
+            </div>
+
             <button
               onClick={() => router.push('/floor-plan')}
               className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
@@ -181,6 +261,15 @@ export default function DashboardPage() {
       </div>
 
       <div className="max-w-7xl mx-auto">
+        {/* Date Display Card */}
+        <div className="bg-gradient-to-br from-teal-900 to-cyan-900 rounded-xl shadow-2xl p-6 mb-6 border-2 border-teal-400">
+          <h2 className="text-3xl font-bold text-white mb-2">📅 Rooms Beschikbaarheid</h2>
+          <p className="text-teal-200 text-lg">
+            {formatDisplayDate(selectedDate)}
+            {isToday(selectedDate) && <span className="ml-2 text-cyan-300 font-semibold">(Vandaag)</span>}
+          </p>
+        </div>
+
         {loading ? (
           <div className="bg-gradient-to-br from-teal-900/50 to-cyan-900/50 rounded-xl shadow-lg p-12 text-center border border-teal-400/20">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-400 mx-auto mb-4"></div>
@@ -204,8 +293,11 @@ export default function DashboardPage() {
                 </thead>
                 <tbody>
                   {rooms.map((room) => {
+                    // Filter bookings for selected date
+                    const filteredBookings = filterBookingsForDate(room.bookings || []);
+                    
                     // Calculate position and width for each booking as a percentage
-                    const bookingsWithPositions = room.bookings?.map((booking) => {
+                    const bookingsWithPositions = filteredBookings.map((booking) => {
                       const start = new Date(booking.start);
                       const end = new Date(booking.end);
                       const startHour = start.getHours() + start.getMinutes() / 60;
@@ -222,7 +314,7 @@ export default function DashboardPage() {
                         startTime: start.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
                         endTime: end.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
                       };
-                    }) || [];
+                    });
 
                     return (
                       <tr key={room.id} className="hover:bg-teal-900/20 transition-colors border-b border-teal-400/10">
