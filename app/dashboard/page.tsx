@@ -508,46 +508,44 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-white p-6">
       {/* SPOQ-inspired Header Bar */}
-      <div className="bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500 text-white py-3 px-4 rounded-lg mb-6 shadow-lg border border-teal-400/20">
+      <div className="bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500 text-white py-2 px-4 rounded-lg mb-6 shadow-lg border border-teal-400/20">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/10 p-2 rounded-lg border border-teal-400/30">
-              <span className="text-2xl">🏢</span>
+          <div className="flex items-center gap-2">
+            <div className="bg-white/10 p-1.5 rounded-lg border border-teal-400/30">
+              <span className="text-xl">🏢</span>
             </div>
-            <h1 className="text-2xl font-bold">{t('roomsAvailability')}</h1>
+            <h1 className="text-xl font-bold">{t('roomsAvailability')}</h1>
           </div>
-          <div className="flex gap-4 items-center flex-wrap">
+          <div className="flex gap-2 items-center flex-wrap">
             {/* Date Navigation */}
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/30 rounded-xl px-4 py-2">
+            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md border border-white/30 rounded-lg px-2 py-1.5">
               <button
                 onClick={goToPreviousDay}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-bold px-2 py-1 rounded-md transition-all text-sm"
                 title="Vorige dag"
               >
                 ←
               </button>
               
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={selectedDate.toISOString().split('T')[0]}
-                  onChange={handleDateChange}
-                  className="bg-white/10 text-white border border-white/40 rounded-lg px-3 py-1.5 font-semibold focus:outline-none focus:border-cyan-400 cursor-pointer"
-                />
-                
-                {!isToday(selectedDate) && (
-                  <button
-                    onClick={goToToday}
-                    className="bg-cyan-400/60 hover:bg-cyan-500/70 backdrop-blur-md border border-cyan-300/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 text-sm whitespace-nowrap min-w-[110px]"
-                  >
-                    📅 {t('today')}
-                  </button>
-                )}
-              </div>
+              <input
+                type="date"
+                value={selectedDate.toISOString().split('T')[0]}
+                onChange={handleDateChange}
+                className="bg-white/10 text-white border border-white/40 rounded-md px-2 py-1 text-xs font-semibold focus:outline-none focus:border-cyan-400 cursor-pointer"
+              />
+              
+              {!isToday(selectedDate) && (
+                <button
+                  onClick={goToToday}
+                  className="bg-cyan-400/60 hover:bg-cyan-500/70 backdrop-blur-md border border-cyan-300/40 text-white font-semibold px-2 py-1 rounded-md transition-all text-xs whitespace-nowrap"
+                >
+                  📅 {t('today')}
+                </button>
+              )}
 
               <button
                 onClick={goToNextDay}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-bold px-2 py-1 rounded-md transition-all text-sm"
                 title="Volgende dag"
               >
                 →
@@ -556,21 +554,21 @@ export default function DashboardPage() {
 
             <button
               onClick={() => router.push('/floor-plan')}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 min-w-[140px] whitespace-nowrap"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all text-sm whitespace-nowrap"
             >
               🗺️ {t('floorPlan')}
             </button>
             {session?.user?.role === 'ADMIN' && (
               <button
                 onClick={() => router.push('/admin')}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 min-w-[110px]"
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all text-sm"
               >
                 👨‍💼 Admin
               </button>
             )}
             <button
               onClick={() => router.push('/my-bookings')}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 min-w-[140px] whitespace-nowrap"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all text-sm whitespace-nowrap"
             >
               📅 {t('myBookings')}
             </button>
@@ -580,7 +578,7 @@ export default function DashboardPage() {
             
             <button
               onClick={() => router.push('/auth/signout')}
-              className="bg-red-500/60 hover:bg-red-500/80 backdrop-blur-md border border-red-400/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 min-w-[130px] whitespace-nowrap"
+              className="bg-red-500/60 hover:bg-red-500/80 backdrop-blur-md border border-red-400/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all text-sm whitespace-nowrap"
             >
               🚪 {t('signOut')}
             </button>

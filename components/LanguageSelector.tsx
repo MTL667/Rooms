@@ -38,34 +38,34 @@ export default function LanguageSelector() {
       {/* Current Language Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 min-w-[100px] whitespace-nowrap flex items-center justify-center gap-2"
+        className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all text-sm whitespace-nowrap flex items-center justify-center gap-1.5"
       >
-        <span className="text-lg">{currentLanguage.flag}</span>
-        <span className="uppercase font-bold">{currentLanguage.code}</span>
+        <span className="text-base">{currentLanguage.flag}</span>
+        <span className="uppercase font-bold text-xs">{currentLanguage.code}</span>
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-gradient-to-br from-teal-900/95 to-cyan-900/95 backdrop-blur-md border-2 border-teal-400/40 rounded-xl shadow-2xl p-2 min-w-[160px] z-[9999]">
-          <div className="flex flex-col gap-1">
+        <div className="absolute top-full right-0 mt-1 bg-gradient-to-br from-teal-900/95 to-cyan-900/95 backdrop-blur-md border-2 border-teal-400/40 rounded-lg shadow-2xl p-1.5 min-w-[140px] z-[9999]">
+          <div className="flex flex-col gap-0.5">
             {languages.map((lang) => (
               <button
                 key={lang.code}
                 onClick={() => handleLanguageChange(lang.code)}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-left ${
+                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all text-left ${
                   language === lang.code
-                    ? 'bg-gradient-to-r from-teal-400/80 to-cyan-400/80 border-2 border-white/40 shadow-lg'
-                    : 'bg-white/10 border border-white/20 hover:bg-white/20 hover:scale-105'
+                    ? 'bg-gradient-to-r from-teal-400/80 to-cyan-400/80 border border-white/40'
+                    : 'bg-white/10 border border-white/20 hover:bg-white/20'
                 }`}
               >
-                <span className="text-xl">{lang.flag}</span>
+                <span className="text-base">{lang.flag}</span>
                 <div className="flex flex-col">
-                  <span className={`text-xs font-bold uppercase ${
+                  <span className={`text-[10px] font-bold uppercase ${
                     language === lang.code ? 'text-white' : 'text-teal-300'
                   }`}>
                     {lang.code}
                   </span>
-                  <span className={`text-[10px] ${
+                  <span className={`text-[9px] ${
                     language === lang.code ? 'text-white/80' : 'text-teal-400/70'
                   }`}>
                     {lang.label}
