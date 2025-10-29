@@ -22,6 +22,17 @@ export default function DashboardPage() {
   const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [bookingForm, setBookingForm] = useState({
+    title: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0],
+    startTime: '',
+    endTime: '',
+  });
+  const [bookingError, setBookingError] = useState<string | null>(null);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -41,6 +52,60 @@ export default function DashboardPage() {
         console.error('Error fetching rooms:', err);
         setLoading(false);
       });
+  };
+
+  const handleBookRoom = (room: Room) => {
+    setSelectedRoom(room);
+    setShowBookingModal(true);
+    setBookingError(null);
+  };
+
+  const handleSubmitBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRoom) return;
+
+    setBookingError(null);
+    
+    try {
+      const start = new Date(`${bookingForm.date}T${bookingForm.startTime}`);
+      const end = new Date(`${bookingForm.date}T${bookingForm.endTime}`);
+
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId: selectedRoom.id,
+          title: bookingForm.title,
+          description: bookingForm.description,
+          start: start.toISOString(),
+          end: end.toISOString(),
+          userEmail: session?.user?.email,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create booking');
+      }
+
+      setBookingSuccess(true);
+      setTimeout(() => {
+        setShowBookingModal(false);
+        setSelectedRoom(null);
+        setBookingSuccess(false);
+        setBookingForm({
+          title: '',
+          description: '',
+          date: new Date().toISOString().split('T')[0],
+          startTime: '',
+          endTime: '',
+        });
+        loadRooms();
+      }, 2000);
+    } catch (error: any) {
+      setBookingError(error.message);
+    }
   };
 
   useEffect(() => {
@@ -162,9 +227,19 @@ export default function DashboardPage() {
                     return (
                       <tr key={room.id} className="hover:bg-teal-900/20 transition-colors border-b border-teal-400/10">
                         <td className="border border-teal-400/20 p-4 sticky left-0 bg-gradient-to-br from-teal-900/40 to-cyan-900/40 z-10 border-r-2 border-teal-400/30">
-                          <div className="font-bold text-white text-lg">{room.name}</div>
-                          <div className="text-sm text-teal-300 font-medium">{room.location}</div>
-                          <div className="text-sm text-cyan-300 font-semibold">👥 {room.capacity} people</div>
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <div className="font-bold text-white text-lg">{room.name}</div>
+                              <div className="text-sm text-teal-300 font-medium">{room.location}</div>
+                              <div className="text-sm text-cyan-300 font-semibold">👥 {room.capacity} people</div>
+                            </div>
+                            <button
+                              onClick={() => handleBookRoom(room)}
+                              className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                            >
+                              📅 Boek
+                            </button>
+                          </div>
                         </td>
                         <td colSpan={timeSlots.length} className="border border-teal-400/20 p-0 relative h-16 bg-gradient-to-br from-emerald-500/10 to-teal-500/10">
                           {/* Time grid lines */}
@@ -233,6 +308,124 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Quick Booking Modal */}
+      {showBookingModal && selectedRoom && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+          <div className="bg-gradient-to-br from-teal-900 to-cyan-900 rounded-xl shadow-2xl max-w-lg w-full border-2 border-teal-400">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">📅 Boek {selectedRoom.name}</h2>
+                  <p className="text-teal-200 text-sm">{selectedRoom.location} • 👥 {selectedRoom.capacity} personen</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowBookingModal(false);
+                    setBookingError(null);
+                  }}
+                  className="text-white hover:text-teal-300 text-2xl font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {bookingSuccess ? (
+                <div className="bg-green-500/20 border border-green-500 rounded-lg p-6 text-center">
+                  <div className="text-6xl mb-4">✅</div>
+                  <p className="text-white font-bold text-xl">Boeking Succesvol!</p>
+                  <p className="text-teal-200 mt-2">Je boeking is bevestigd</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmitBooking} className="space-y-4">
+                  {bookingError && (
+                    <div className="bg-red-500/20 border border-red-500 rounded-lg p-3 text-red-200 text-sm">
+                      ⚠️ {bookingError}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-white font-semibold mb-2">Titel *</label>
+                    <input
+                      type="text"
+                      required
+                      value={bookingForm.title}
+                      onChange={(e) => setBookingForm({ ...bookingForm, title: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border-2 border-teal-400 bg-white/10 text-white placeholder-teal-300 focus:outline-none focus:border-cyan-400"
+                      placeholder="Bijvoorbeeld: Team Meeting"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white font-semibold mb-2">Beschrijving</label>
+                    <textarea
+                      value={bookingForm.description}
+                      onChange={(e) => setBookingForm({ ...bookingForm, description: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border-2 border-teal-400 bg-white/10 text-white placeholder-teal-300 focus:outline-none focus:border-cyan-400 resize-none"
+                      rows={3}
+                      placeholder="Optionele beschrijving..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white font-semibold mb-2">Datum *</label>
+                    <input
+                      type="date"
+                      required
+                      value={bookingForm.date}
+                      onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-2 rounded-lg border-2 border-teal-400 bg-white/10 text-white focus:outline-none focus:border-cyan-400"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-white font-semibold mb-2">Start Tijd *</label>
+                      <input
+                        type="time"
+                        required
+                        value={bookingForm.startTime}
+                        onChange={(e) => setBookingForm({ ...bookingForm, startTime: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg border-2 border-teal-400 bg-white/10 text-white focus:outline-none focus:border-cyan-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white font-semibold mb-2">Eind Tijd *</label>
+                      <input
+                        type="time"
+                        required
+                        value={bookingForm.endTime}
+                        onChange={(e) => setBookingForm({ ...bookingForm, endTime: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg border-2 border-teal-400 bg-white/10 text-white focus:outline-none focus:border-cyan-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <button
+                      type="submit"
+                      className="flex-1 bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white font-bold py-3 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:scale-105"
+                    >
+                      ✅ Bevestigen
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowBookingModal(false);
+                        setBookingError(null);
+                      }}
+                      className="flex-1 bg-gray-600/60 hover:bg-gray-700/70 backdrop-blur-md border border-gray-400/30 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

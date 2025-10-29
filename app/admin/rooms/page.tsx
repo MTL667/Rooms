@@ -32,6 +32,7 @@ export default function RoomsManagement() {
   const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     location: '',
@@ -78,8 +79,13 @@ export default function RoomsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await fetch('/api/admin/rooms', {
-        method: 'POST',
+      const url = editingRoom 
+        ? `/api/admin/rooms/${editingRoom.id}` 
+        : '/api/admin/rooms';
+      const method = editingRoom ? 'PATCH' : 'POST';
+
+      await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
@@ -91,11 +97,27 @@ export default function RoomsManagement() {
       });
       loadRooms();
       setShowForm(false);
+      setEditingRoom(null);
       setShowPositionPicker(false);
       setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null });
     } catch (error) {
-      console.error('Error creating room:', error);
+      console.error('Error saving room:', error);
     }
+  };
+
+  const handleEditRoom = (room: Room) => {
+    setEditingRoom(room);
+    setFormData({
+      name: room.name,
+      location: room.location || '',
+      capacity: room.capacity,
+      msResourceEmail: room.msResourceEmail || '',
+      active: room.active,
+      floorPlanId: room.floorPlanId || '',
+      positionX: room.positionX,
+      positionY: room.positionY,
+    });
+    setShowForm(true);
   };
 
   const deleteRoom = async (id: string) => {
@@ -117,22 +139,31 @@ export default function RoomsManagement() {
           <h1 className="text-3xl font-bold text-gray-900">Rooms Management</h1>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowForm(!showForm)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              onClick={() => {
+                setShowForm(!showForm);
+                if (showForm) {
+                  setEditingRoom(null);
+                  setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null });
+                }
+              }}
+              className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-teal-300/30 text-white px-4 py-2 rounded-xl font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
             >
-              {showForm ? 'Cancel' : 'Add Room'}
+              {showForm ? '❌ Cancel' : '➕ Add Room'}
             </button>
             <button
               onClick={() => router.push('/admin')}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+              className="bg-gray-200/60 hover:bg-gray-300/70 backdrop-blur-md border border-gray-300/40 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
             >
-              Back
+              ⬅️ Back
             </button>
           </div>
         </div>
 
         {showForm && (
           <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              {editingRoom ? '✏️ Bewerk Room' : '➕ Nieuwe Room'}
+            </h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold mb-2 text-gray-900">Name</label>
@@ -232,15 +263,22 @@ export default function RoomsManagement() {
                 <label className="text-sm font-semibold text-gray-900">Active</label>
               </div>
               <div className="flex gap-2">
-                <button type="submit" className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700">
-                  Create Room
+                <button 
+                  type="submit" 
+                  className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white px-6 py-2 rounded-xl font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
+                >
+                  {editingRoom ? '💾 Opslaan' : '➕ Aanmaken'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
-                  className="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-400"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingRoom(null);
+                    setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null });
+                  }}
+                  className="bg-gray-600/60 hover:bg-gray-700/70 backdrop-blur-md border border-gray-400/30 text-white px-6 py-2 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
                 >
-                  Cancel
+                  Annuleren
                 </button>
               </div>
             </div>
@@ -268,12 +306,20 @@ export default function RoomsManagement() {
                   <td className="p-3 text-sm text-gray-600 font-mono">{room.msResourceEmail || '-'}</td>
                   <td className="p-3 text-gray-900">{room._count.bookings}</td>
                   <td className="p-3">
-                    <button
-                      onClick={() => deleteRoom(room.id)}
-                      className="text-red-600 hover:underline text-sm font-semibold"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditRoom(room)}
+                        className="bg-teal-400/80 hover:bg-teal-500/90 backdrop-blur-md border border-teal-300/30 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        onClick={() => deleteRoom(room.id)}
+                        className="bg-red-500/60 hover:bg-red-600/70 backdrop-blur-md border border-red-400/30 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
