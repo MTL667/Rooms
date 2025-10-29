@@ -138,13 +138,25 @@ export default function DashboardPage() {
                 </thead>
                 <tbody>
                   {rooms.map((room) => {
-                    const getBookingForHour = (hour: number) => {
-                      return room.bookings?.find((booking) => {
-                        const start = new Date(booking.start);
-                        const end = new Date(booking.end);
-                        return start.getHours() <= hour && end.getHours() > hour;
-                      });
-                    };
+                    // Calculate position and width for each booking as a percentage
+                    const bookingsWithPositions = room.bookings?.map((booking) => {
+                      const start = new Date(booking.start);
+                      const end = new Date(booking.end);
+                      const startHour = start.getHours() + start.getMinutes() / 60;
+                      const endHour = end.getHours() + end.getMinutes() / 60;
+                      
+                      // Calculate position from 6:00
+                      const startPos = ((startHour - 6) / 17) * 100;
+                      const width = ((endHour - startHour) / 17) * 100;
+                      
+                      return {
+                        ...booking,
+                        startPos: Math.max(0, Math.min(100, startPos)),
+                        width: Math.max(0, Math.min(100 - startPos, width)),
+                        startTime: start.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
+                        endTime: end.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
+                      };
+                    }) || [];
 
                     return (
                       <tr key={room.id} className="hover:bg-teal-900/20 transition-colors border-b border-teal-400/10">
@@ -153,21 +165,48 @@ export default function DashboardPage() {
                           <div className="text-sm text-teal-300 font-medium">{room.location}</div>
                           <div className="text-sm text-cyan-300 font-semibold">👥 {room.capacity} people</div>
                         </td>
-                        {timeSlots.map((hour) => {
-                          const booking = getBookingForHour(hour);
-                          return (
-                            <td
-                              key={hour}
-                              className={`border border-teal-400/20 p-2 text-center text-xs font-semibold transition-all ${
-                                booking
-                                  ? 'bg-gradient-to-br from-red-500/30 to-pink-500/30 text-red-300'
-                                  : 'bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-300'
-                              }`}
+                        <td colSpan={timeSlots.length} className="border border-teal-400/20 p-0 relative h-16 bg-gradient-to-br from-emerald-500/10 to-teal-500/10">
+                          {/* Time grid lines */}
+                          <div className="absolute inset-0 flex">
+                            {timeSlots.map((hour, idx) => (
+                              <div
+                                key={hour}
+                                className="flex-1 border-r border-teal-400/10"
+                                style={{ borderRight: idx === timeSlots.length - 1 ? 'none' : undefined }}
+                              />
+                            ))}
+                          </div>
+                          
+                          {/* Booking bars */}
+                          {bookingsWithPositions.map((booking, idx) => (
+                            <div
+                              key={booking.id}
+                              className="absolute top-1 bottom-1 bg-gradient-to-r from-red-500/80 to-pink-500/80 backdrop-blur-sm border-2 border-red-400/40 rounded-lg shadow-lg flex items-center justify-center overflow-hidden group hover:shadow-xl transition-all cursor-pointer"
+                              style={{
+                                left: `${booking.startPos}%`,
+                                width: `${booking.width}%`,
+                                zIndex: 10 + idx,
+                              }}
+                              title={`${booking.title}\n${booking.startTime} - ${booking.endTime}`}
                             >
-                              {booking ? '🔴' : '🟢'}
-                            </td>
-                          );
-                        })}
+                              <div className="text-white text-xs font-bold px-2 truncate">
+                                {booking.width > 8 && (
+                                  <span>{booking.startTime} - {booking.endTime}</span>
+                                )}
+                                {booking.width > 15 && (
+                                  <span className="ml-2">• {booking.title}</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {/* Show "Free" if no bookings */}
+                          {bookingsWithPositions.length === 0 && (
+                            <div className="absolute inset-0 flex items-center justify-center text-emerald-400 font-semibold text-sm">
+                              ✓ Beschikbaar
+                            </div>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
