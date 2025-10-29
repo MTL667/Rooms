@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
+import LanguageSelector from '@/components/LanguageSelector';
 
 interface Booking {
   id: string;
@@ -24,6 +26,7 @@ interface Room {
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { t } = useLanguage();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -864,6 +867,9 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Language Selector */}
+      <LanguageSelector />
     </main>
   );
 }
