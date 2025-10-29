@@ -44,7 +44,7 @@ export default function SignIn() {
               signIn('azure-ad');
             }}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-teal-500 via-cyan-500 to-teal-500 hover:from-teal-600 hover:via-cyan-600 hover:to-teal-600 text-white py-3 px-4 rounded-lg transition-all font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            className="w-full bg-gradient-to-r from-teal-400/80 via-cyan-400/80 to-teal-400/80 hover:from-teal-500/90 hover:via-cyan-500/90 hover:to-teal-500/90 backdrop-blur-md border border-white/30 text-white py-3 px-4 rounded-xl transition-all font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl hover:scale-105"
           >
             {loading ? 'Connecting...' : '🔐 Sign in with Microsoft'}
           </button>

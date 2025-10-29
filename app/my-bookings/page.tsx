@@ -72,13 +72,13 @@ export default function MyBookings() {
             <div className="flex gap-2">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-semibold px-4 py-2 rounded-lg transition-all border border-teal-400/30"
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
               >
                 🏠 Dashboard
               </button>
               <button
                 onClick={() => router.push('/auth/signout')}
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all"
+                className="bg-red-500/60 hover:bg-red-500/80 backdrop-blur-md border border-red-400/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
               >
                 🚪 Sign Out
               </button>

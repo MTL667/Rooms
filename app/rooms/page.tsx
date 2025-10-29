@@ -42,7 +42,7 @@ export default function RoomsPage() {
             <h1 className="text-3xl font-bold">🏢 Available Rooms</h1>
             <button 
               onClick={() => router.push('/dashboard')}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-semibold px-6 py-2 rounded-lg transition-all border border-teal-400/30"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-6 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
             >
               ← Back to Dashboard
             </button>

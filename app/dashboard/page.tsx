@@ -86,27 +86,27 @@ export default function DashboardPage() {
           <div className="flex gap-2">
             <button
               onClick={() => router.push('/floor-plan')}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur border border-teal-400/30 text-white font-semibold px-4 py-2 rounded-lg transition-all"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
             >
               🗺️ Plattegrond
             </button>
             {session?.user?.role === 'ADMIN' && (
               <button
                 onClick={() => router.push('/admin')}
-                className="bg-white/10 hover:bg-white/20 backdrop-blur border border-teal-400/30 text-white font-semibold px-4 py-2 rounded-lg transition-all"
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
               >
                 👨‍💼 Admin
               </button>
             )}
             <button
               onClick={() => router.push('/my-bookings')}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur border border-teal-400/30 text-white font-semibold px-4 py-2 rounded-lg transition-all"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
             >
               📅 My Bookings
             </button>
             <button
               onClick={() => router.push('/auth/signout')}
-              className="bg-red-500/80 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all"
+              className="bg-red-500/60 hover:bg-red-500/80 backdrop-blur-md border border-red-400/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
             >
               🚪 Sign Out
             </button>

@@ -137,13 +137,13 @@ export default function FloorPlansManagement() {
           <div className="flex gap-2">
             <button
               onClick={() => setShowForm(!showForm)}
-              className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-md"
+              className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-teal-300/30 text-white px-6 py-2 rounded-xl font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
             >
               {showForm ? '❌ Annuleren' : '➕ Nieuwe Plattegrond'}
             </button>
             <button
               onClick={() => router.push('/admin')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-semibold transition-all"
+              className="bg-gray-200/60 hover:bg-gray-300/70 backdrop-blur-md border border-gray-300/40 text-gray-700 px-6 py-2 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
             >
               ⬅️ Terug
             </button>
@@ -247,7 +247,7 @@ export default function FloorPlansManagement() {
               <button
                 type="submit"
                 disabled={uploading || (!selectedFile && !formData.imageUrl)}
-                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all shadow-lg"
+                className="w-full bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 disabled:from-gray-400/60 disabled:to-gray-500/60 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 text-white font-bold py-3 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:scale-105"
               >
                 {uploading ? '⏳ Uploaden...' : '💾 Opslaan'}
               </button>
@@ -312,7 +312,7 @@ export default function FloorPlansManagement() {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => deleteFloorPlan(fp.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-all"
+                        className="bg-red-500/60 hover:bg-red-600/70 backdrop-blur-md border border-red-400/30 text-white px-4 py-2 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
                       >
                         🗑️ Verwijderen
                       </button>

@@ -205,7 +205,7 @@ export default function RoomsManagement() {
                       <button
                         type="button"
                         onClick={() => setShowPositionPicker(true)}
-                        className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                        className="bg-teal-400/80 hover:bg-teal-500/90 backdrop-blur-md border border-teal-300/30 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
                       >
                         🎯 Wijzig Positie
                       </button>
@@ -214,7 +214,7 @@ export default function RoomsManagement() {
                     <button
                       type="button"
                       onClick={() => setShowPositionPicker(true)}
-                      className="w-full bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg font-semibold"
+                      className="w-full bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white px-4 py-2 rounded-xl font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
                     >
                       🎯 Klik om Positie te Selecteren
                     </button>
@@ -339,7 +339,7 @@ export default function RoomsManagement() {
                 <button
                   onClick={() => setShowPositionPicker(false)}
                   disabled={formData.positionX === null || formData.positionY === null}
-                  className="bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition-all"
+                  className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 disabled:from-gray-400/60 disabled:to-gray-500/60 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 text-white px-6 py-2 rounded-xl font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
                 >
                   ✅ Bevestigen
                 </button>

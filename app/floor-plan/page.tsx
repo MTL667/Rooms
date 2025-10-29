@@ -162,7 +162,7 @@ export default function FloorPlanView() {
             <p className="text-gray-600 mb-6">Neem contact op met de beheerder om plattegronden toe te voegen.</p>
             <button
               onClick={() => router.push('/dashboard')}
-              className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold px-8 py-3 rounded-lg shadow-lg transition-all"
+              className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white font-bold px-8 py-3 rounded-xl shadow-xl hover:shadow-2xl transition-all hover:scale-105"
             >
               ⬅️ Terug naar Dashboard
             </button>
@@ -183,22 +183,22 @@ export default function FloorPlanView() {
             </div>
             <h1 className="text-2xl font-bold">Plattegrond Overzicht</h1>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur border border-teal-400/30 text-white font-semibold px-4 py-2 rounded-lg transition-all"
-            >
-              📊 Tabel View
-            </button>
-            {session?.user?.role === 'ADMIN' && (
+            <div className="flex gap-2">
               <button
-                onClick={() => router.push('/admin')}
-                className="bg-white/10 hover:bg-white/20 backdrop-blur border border-teal-400/30 text-white font-semibold px-4 py-2 rounded-lg transition-all"
+                onClick={() => router.push('/dashboard')}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
               >
-                👨‍💼 Admin
+                📊 Tabel View
               </button>
-            )}
-          </div>
+              {session?.user?.role === 'ADMIN' && (
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                >
+                  👨‍💼 Admin
+                </button>
+              )}
+            </div>
         </div>
       </div>
 
@@ -209,10 +209,10 @@ export default function FloorPlanView() {
             <button
               key={fp.id}
               onClick={() => setSelectedFloorPlan(fp.id)}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all shadow-md border-2 ${
+              className={`px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105 border ${
                 selectedFloorPlan === fp.id
-                  ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-teal-400'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
+                  ? 'bg-gradient-to-r from-teal-400/80 to-cyan-400/80 backdrop-blur-md text-white border-white/40'
+                  : 'bg-white/60 backdrop-blur-md text-gray-700 hover:bg-white/80 border-gray-200/40'
               }`}
             >
               🏢 {fp.name}
@@ -335,7 +335,7 @@ export default function FloorPlanView() {
               <button
                 onClick={handleBookRoom}
                 disabled={!isRoomAvailable(selectedRoom)}
-                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all shadow-lg"
+                className="w-full bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 disabled:from-gray-500/60 disabled:to-gray-600/60 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 text-white font-bold py-3 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:scale-105"
               >
                 {isRoomAvailable(selectedRoom) ? '📅 Boek Deze Kamer' : '🔒 Niet Beschikbaar'}
               </button>
@@ -440,7 +440,7 @@ export default function FloorPlanView() {
                   <div className="flex gap-2 pt-4">
                     <button
                       type="submit"
-                      className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg"
+                      className="flex-1 bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white font-bold py-3 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:scale-105"
                     >
                       ✅ Bevestigen
                     </button>
@@ -450,7 +450,7 @@ export default function FloorPlanView() {
                         setShowBookingForm(false);
                         setBookingError(null);
                       }}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-all"
+                      className="flex-1 bg-gray-600/60 hover:bg-gray-700/70 backdrop-blur-md border border-gray-400/30 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
                     >
                       Annuleren
                     </button>
