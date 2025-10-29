@@ -30,6 +30,7 @@ export default function DashboardPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
@@ -57,6 +58,14 @@ export default function DashboardPage() {
       router.push('/auth/signin');
     }
   }, [status, router]);
+
+  useEffect(() => {
+    // Load custom logo
+    fetch('/api/settings/logo')
+      .then(res => res.json())
+      .then(data => setLogoUrl(data.logoUrl))
+      .catch(err => console.error('Error fetching logo:', err));
+  }, []);
 
   const loadRooms = () => {
     if (!session) return;
@@ -511,9 +520,17 @@ export default function DashboardPage() {
       <div className="bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500 text-white py-2 px-4 rounded-lg mb-6 shadow-lg border border-teal-400/20">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="bg-white/10 p-1.5 rounded-lg border border-teal-400/30">
-              <span className="text-xl">🏢</span>
-            </div>
+            {logoUrl ? (
+              <img 
+                src={logoUrl} 
+                alt="Logo" 
+                className="h-8 object-contain"
+              />
+            ) : (
+              <div className="bg-white/10 p-1.5 rounded-lg border border-teal-400/30">
+                <span className="text-xl">🏢</span>
+              </div>
+            )}
             <h1 className="text-xl font-bold">{t('roomsAvailability')}</h1>
           </div>
           <div className="flex gap-2 items-center flex-wrap">

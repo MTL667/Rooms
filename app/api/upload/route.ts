@@ -14,6 +14,7 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File;
+    const type = (formData.get('type') as string) || 'floorplans'; // Default to floorplans for backward compatibility
     
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -32,8 +33,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid file type. Only images are allowed." }, { status: 400 });
     }
 
+    // Determine subdirectory based on type
+    const subDir = type === 'logo' ? 'logos' : 'floorplans';
+
     // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'floorplans');
+    const uploadsDir = join(process.cwd(), 'public', 'uploads', subDir);
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true });
     }
@@ -49,7 +53,7 @@ export async function POST(req: Request) {
     await writeFile(filepath, buffer);
 
     // Return the public URL
-    const publicUrl = `/uploads/floorplans/${filename}`;
+    const publicUrl = `/uploads/${subDir}/${filename}`;
     
     return NextResponse.json({ 
       success: true, 

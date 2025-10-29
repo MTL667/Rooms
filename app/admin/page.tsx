@@ -81,6 +81,16 @@ export default function AdminPage() {
           </button>
 
           <button
+            onClick={() => router.push('/admin/branding')}
+            className="bg-pink-600 hover:bg-pink-700 text-white rounded-lg shadow p-6 text-left transition-colors"
+          >
+            <div className="text-2xl font-semibold mb-2">🎨 Branding</div>
+            <p className="text-pink-100 text-sm">
+              Upload custom logo and branding
+            </p>
+          </button>
+
+          <button
             onClick={() => router.push('/admin/settings')}
             className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow p-6 text-left transition-colors"
           >
