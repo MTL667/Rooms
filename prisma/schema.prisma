@@ -53,6 +53,7 @@ model User {
   totpSecret       String?
   recoveryCodes    String?
   status           UserStatus       @default(INVITED)
+  language         String           @default("nl")
   bookings         Booking[]
 }
 
