@@ -574,6 +574,10 @@ export default function DashboardPage() {
             >
               📅 {t('myBookings')}
             </button>
+            
+            {/* Language Selector */}
+            <LanguageSelector />
+            
             <button
               onClick={() => router.push('/auth/signout')}
               className="bg-red-500/60 hover:bg-red-500/80 backdrop-blur-md border border-red-400/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 min-w-[130px] whitespace-nowrap"
@@ -912,9 +916,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-
-      {/* Language Selector */}
-      <LanguageSelector />
     </main>
   );
 }
