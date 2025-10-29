@@ -42,9 +42,9 @@ export default function MyBookings() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400 mx-auto mb-4"></div>
           <p className="text-gray-700 font-semibold">Loading...</p>
         </div>
       </div>
@@ -58,13 +58,13 @@ export default function MyBookings() {
   const past = bookings.filter(b => new Date(b.end) <= now);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+    <main className="min-h-screen bg-white p-6">
       <div className="max-w-6xl mx-auto">
-        {/* Vibrant Header */}
-        <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 text-white py-4 px-6 rounded-xl shadow-lg mb-6">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500 text-white py-4 px-6 rounded-xl shadow-lg mb-6 border border-teal-400/20">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-2 rounded-lg">
+              <div className="bg-white/20 p-2 rounded-lg border border-teal-400/30">
                 <span className="text-2xl">📅</span>
               </div>
               <h1 className="text-3xl font-bold">My Bookings</h1>
@@ -72,7 +72,7 @@ export default function MyBookings() {
             <div className="flex gap-2">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-semibold px-4 py-2 rounded-lg transition-all"
+                className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-semibold px-4 py-2 rounded-lg transition-all border border-teal-400/30"
               >
                 🏠 Dashboard
               </button>
@@ -87,8 +87,8 @@ export default function MyBookings() {
         </div>
 
         {loading ? (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
+          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl shadow-lg p-12 text-center border border-teal-200">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-400 mx-auto mb-4"></div>
             <p className="text-gray-700 font-semibold text-lg">Loading bookings...</p>
           </div>
         ) : (
@@ -96,13 +96,13 @@ export default function MyBookings() {
             {/* Upcoming Bookings */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="bg-gradient-to-r from-green-400 to-emerald-500 text-white px-3 py-1 rounded-lg text-lg">
+                <span className="bg-gradient-to-r from-teal-400 to-cyan-500 text-white px-3 py-1 rounded-lg text-lg">
                   ✅
                 </span>
                 Upcoming ({upcoming.length})
               </h2>
               {upcoming.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-lg p-12 text-center border-2 border-green-200">
+                <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl shadow-lg p-12 text-center border-2 border-teal-200">
                   <div className="text-4xl mb-3">📅</div>
                   <p className="text-gray-600 font-semibold">No upcoming bookings</p>
                 </div>
@@ -111,15 +111,15 @@ export default function MyBookings() {
                   {upcoming.map((booking) => (
                     <div
                       key={booking.id}
-                      className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-lg p-6 border-2 border-green-200 hover:shadow-xl transition-all"
+                      className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl shadow-lg p-6 border-2 border-teal-200 hover:shadow-xl transition-all"
                     >
                       <h3 className="text-xl font-bold text-gray-900 mb-2">{booking.title}</h3>
                       <p className="text-gray-700 mb-3">🏢 {booking.room.name}</p>
                       <div className="flex gap-4 text-sm">
-                        <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg font-semibold">
+                        <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-lg font-semibold">
                           📅 {new Date(booking.start).toLocaleDateString()}
                         </span>
-                        <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg font-semibold">
+                        <span className="bg-cyan-100 text-cyan-700 px-3 py-1 rounded-lg font-semibold">
                           🕐 {new Date(booking.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>

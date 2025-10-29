@@ -58,10 +58,10 @@ export default function DashboardPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400 mx-auto mb-4"></div>
-          <p className="text-white font-semibold">Loading...</p>
+          <p className="text-gray-900 font-semibold">Loading...</p>
         </div>
       </div>
     );
@@ -73,7 +73,7 @@ export default function DashboardPage() {
   const timeSlots = Array.from({ length: 17 }, (_, i) => i + 6);
 
   return (
-    <main className="min-h-screen bg-black p-6">
+    <main className="min-h-screen bg-white p-6">
       {/* SPOQ-inspired Header Bar */}
       <div className="bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500 text-white py-3 px-4 rounded-lg mb-6 shadow-lg border border-teal-400/20">
         <div className="max-w-7xl mx-auto flex justify-between items-center">

@@ -141,10 +141,10 @@ export default function FloorPlanView() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400 mx-auto mb-4"></div>
-          <p className="text-white font-semibold">Loading...</p>
+          <p className="text-gray-900 font-semibold">Loading...</p>
         </div>
       </div>
     );
@@ -154,12 +154,12 @@ export default function FloorPlanView() {
 
   if (floorPlans.length === 0) {
     return (
-      <main className="min-h-screen bg-black p-6">
+      <main className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-gradient-to-br from-teal-900/40 to-cyan-900/40 rounded-xl shadow-xl p-12 text-center border border-teal-400/20">
+          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl shadow-xl p-12 text-center border-2 border-teal-200">
             <div className="text-6xl mb-4">🗺️</div>
-            <p className="text-white font-bold text-xl mb-2">Geen plattegronden beschikbaar</p>
-            <p className="text-teal-300 mb-6">Neem contact op met de beheerder om plattegronden toe te voegen.</p>
+            <p className="text-gray-900 font-bold text-xl mb-2">Geen plattegronden beschikbaar</p>
+            <p className="text-gray-600 mb-6">Neem contact op met de beheerder om plattegronden toe te voegen.</p>
             <button
               onClick={() => router.push('/dashboard')}
               className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold px-8 py-3 rounded-lg shadow-lg transition-all"
@@ -173,7 +173,7 @@ export default function FloorPlanView() {
   }
 
   return (
-    <main className="min-h-screen bg-black p-6">
+    <main className="min-h-screen bg-white p-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500 text-white py-3 px-4 rounded-lg mb-6 shadow-lg border border-teal-400/20">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -209,10 +209,10 @@ export default function FloorPlanView() {
             <button
               key={fp.id}
               onClick={() => setSelectedFloorPlan(fp.id)}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all shadow-md ${
+              className={`px-6 py-3 rounded-lg font-semibold transition-all shadow-md border-2 ${
                 selectedFloorPlan === fp.id
-                  ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-teal-400'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
               }`}
             >
               🏢 {fp.name}
@@ -223,12 +223,12 @@ export default function FloorPlanView() {
 
         {/* Floor Plan View */}
         {currentFloorPlan && (
-          <div className="bg-gradient-to-br from-teal-900/30 to-cyan-900/30 rounded-xl shadow-xl border border-teal-400/20 p-6">
+          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl shadow-xl border-2 border-teal-200 p-6">
             <div className="mb-4 flex justify-between items-center">
               <div>
-                <h2 className="text-2xl font-bold text-white">{currentFloorPlan.name}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{currentFloorPlan.name}</h2>
                 {currentFloorPlan.building && (
-                  <p className="text-teal-300">
+                  <p className="text-gray-600">
                     Gebouw: {currentFloorPlan.building} {currentFloorPlan.floor && `- Verdieping ${currentFloorPlan.floor}`}
                   </p>
                 )}
@@ -236,11 +236,11 @@ export default function FloorPlanView() {
               <div className="flex gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                  <span className="text-white">Beschikbaar</span>
+                  <span className="text-gray-700 font-semibold">Beschikbaar</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                  <span className="text-white">Bezet</span>
+                  <span className="text-gray-700 font-semibold">Bezet</span>
                 </div>
               </div>
             </div>
