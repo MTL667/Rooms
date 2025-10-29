@@ -79,7 +79,6 @@ export default function DashboardPage() {
           description: bookingForm.description,
           start: start.toISOString(),
           end: end.toISOString(),
-          userEmail: session?.user?.email,
         }),
       });
 

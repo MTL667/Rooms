@@ -108,7 +108,6 @@ export default function FloorPlanView() {
           description: bookingForm.description,
           start: start.toISOString(),
           end: end.toISOString(),
-          userEmail: session?.user?.email,
         }),
       });
 

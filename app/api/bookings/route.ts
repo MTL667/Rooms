@@ -1,24 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
+import { getToken } from "next-auth/jwt";
 
 export async function POST(req: Request) {
   try {
-    // Get session from request headers
-    const headersList = await headers();
-    const cookie = headersList.get('cookie');
+    // Check authentication using NextAuth JWT
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     
-    // Simple auth check - in production you'd validate the session token
-    if (!cookie || !cookie.includes('next-auth.session-token')) {
+    if (!token || !token.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const data = await req.json();
-    const { roomId, title, description, start, end, userEmail } = data;
+    const { roomId, title, description, start, end } = data;
 
-    if (!userEmail) {
-      return NextResponse.json({ error: "User email required" }, { status: 400 });
-    }
+    // Use email from authenticated token
+    const userEmail = token.email as string;
 
     // Validate required fields
     if (!roomId || !title || !start || !end) {
