@@ -28,6 +28,9 @@ export default function FloorPlansManagement() {
     imageUrl: '',
     active: true,
   });
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (session?.user?.role !== 'ADMIN') {
@@ -49,19 +52,65 @@ export default function FloorPlansManagement() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      // Create preview URL
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     try {
+      let imageUrl = formData.imageUrl;
+
+      // If a file is selected, upload it first
+      if (selectedFile) {
+        setUploading(true);
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', selectedFile);
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) {
+          throw new Error(uploadData.error || 'Upload failed');
+        }
+
+        imageUrl = uploadData.url;
+        setUploading(false);
+      }
+
+      if (!imageUrl) {
+        alert('Geen afbeelding geselecteerd');
+        return;
+      }
+
       await fetch('/api/admin/floor-plans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          imageUrl,
+        }),
       });
+      
       loadFloorPlans();
       setShowForm(false);
       setFormData({ name: '', building: '', floor: '', imageUrl: '', active: true });
+      setSelectedFile(null);
+      setPreviewUrl(null);
     } catch (error) {
       console.error('Error creating floor plan:', error);
+      alert('Fout bij het aanmaken van plattegrond');
+      setUploading(false);
     }
   };
 
@@ -153,35 +202,54 @@ export default function FloorPlansManagement() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Afbeelding URL * 
-                  <span className="text-gray-500 font-normal ml-2">(Upload naar een hosting service en plak de URL hier)</span>
+                  Plattegrond Afbeelding *
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="https://example.com/floorplan.png"
-                />
-                {formData.imageUrl && (
-                  <div className="mt-3 border border-gray-200 rounded-lg p-2">
-                    <img 
-                      src={formData.imageUrl} 
-                      alt="Preview" 
-                      className="max-h-48 mx-auto"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3E❌ Invalid URL%3C/text%3E%3C/svg%3E';
-                      }}
-                    />
-                  </div>
-                )}
+                <div className="border-2 border-dashed border-teal-300 rounded-lg p-6 text-center hover:border-teal-500 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="floor-plan-upload"
+                  />
+                  <label 
+                    htmlFor="floor-plan-upload" 
+                    className="cursor-pointer block"
+                  >
+                    {previewUrl ? (
+                      <div className="space-y-2">
+                        <img 
+                          src={previewUrl} 
+                          alt="Preview" 
+                          className="max-h-48 mx-auto rounded"
+                        />
+                        <p className="text-sm text-gray-600">
+                          {selectedFile?.name}
+                        </p>
+                        <p className="text-xs text-teal-600 font-semibold">
+                          Klik om een andere afbeelding te kiezen
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="text-6xl mb-2">📤</div>
+                        <p className="text-gray-700 font-semibold mb-1">
+                          Klik om een afbeelding te uploaden
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          PNG, JPG, GIF of WebP (max 10MB)
+                        </p>
+                      </div>
+                    )}
+                  </label>
+                </div>
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg"
+                disabled={uploading || (!selectedFile && !formData.imageUrl)}
+                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all shadow-lg"
               >
-                💾 Opslaan
+                {uploading ? '⏳ Uploaden...' : '💾 Opslaan'}
               </button>
             </form>
           </div>
