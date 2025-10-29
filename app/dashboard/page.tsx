@@ -449,7 +449,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400 mx-auto mb-4"></div>
-          <p className="text-gray-900 font-semibold">Loading...</p>
+          <p className="text-gray-900 font-semibold">{t('loading')}</p>
         </div>
       </div>
     );
@@ -469,7 +469,7 @@ export default function DashboardPage() {
             <div className="bg-white/10 p-2 rounded-lg border border-teal-400/30">
               <span className="text-2xl">🏢</span>
             </div>
-            <h1 className="text-2xl font-bold">Rooms Availability</h1>
+            <h1 className="text-2xl font-bold">{t('roomsAvailability')}</h1>
           </div>
           <div className="flex gap-4 items-center flex-wrap">
             {/* Date Navigation */}
@@ -495,7 +495,7 @@ export default function DashboardPage() {
                     onClick={goToToday}
                     className="bg-cyan-400/60 hover:bg-cyan-500/70 backdrop-blur-md border border-cyan-300/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 text-sm whitespace-nowrap"
                   >
-                    📅 Vandaag
+                    📅 {t('today')}
                   </button>
                 )}
               </div>
@@ -513,7 +513,7 @@ export default function DashboardPage() {
               onClick={() => router.push('/floor-plan')}
               className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
             >
-              🗺️ Plattegrond
+              🗺️ {t('floorPlan')}
             </button>
             {session?.user?.role === 'ADMIN' && (
               <button
@@ -527,13 +527,13 @@ export default function DashboardPage() {
               onClick={() => router.push('/my-bookings')}
               className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
             >
-              📅 My Bookings
+              📅 {t('myBookings')}
             </button>
             <button
               onClick={() => router.push('/auth/signout')}
               className="bg-red-500/60 hover:bg-red-500/80 backdrop-blur-md border border-red-400/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
             >
-              🚪 Sign Out
+              🚪 {t('signOut')}
             </button>
           </div>
         </div>
@@ -542,17 +542,17 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto">
         {/* Date Display Card */}
         <div className="bg-gradient-to-br from-teal-900 to-cyan-900 rounded-xl shadow-2xl p-6 mb-6 border-2 border-teal-400">
-          <h2 className="text-3xl font-bold text-white mb-2">📅 Rooms Beschikbaarheid</h2>
+          <h2 className="text-3xl font-bold text-white mb-2">📅 {t('roomsAvailability')}</h2>
           <p className="text-teal-200 text-lg">
             {formatDisplayDate(selectedDate)}
-            {isToday(selectedDate) && <span className="ml-2 text-cyan-300 font-semibold">(Vandaag)</span>}
+            {isToday(selectedDate) && <span className="ml-2 text-cyan-300 font-semibold">({t('today')})</span>}
           </p>
         </div>
 
         {loading ? (
           <div className="bg-gradient-to-br from-teal-900/50 to-cyan-900/50 rounded-xl shadow-lg p-12 text-center border border-teal-400/20">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-400 mx-auto mb-4"></div>
-            <p className="text-white font-semibold text-lg">Loading rooms...</p>
+            <p className="text-white font-semibold text-lg">{t('loadingRooms')}</p>
           </div>
         ) : (
           <div className="bg-gradient-to-br from-teal-900/30 to-cyan-900/30 rounded-xl shadow-xl overflow-hidden border border-teal-400/20">
@@ -604,13 +604,13 @@ export default function DashboardPage() {
                             <div>
                               <div className="font-bold text-white text-lg">{room.name}</div>
                               <div className="text-sm text-teal-300 font-medium">{room.location}</div>
-                              <div className="text-sm text-cyan-300 font-semibold">👥 {room.capacity} people</div>
+                              <div className="text-sm text-cyan-300 font-semibold">👥 {room.capacity} {t('people')}</div>
                             </div>
                             <button
                               onClick={() => handleBookRoom(room)}
                               className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105"
                             >
-                              📅 Boek
+                              📅 {t('book')}
                             </button>
                           </div>
                         </td>
@@ -707,7 +707,7 @@ export default function DashboardPage() {
                           {/* Show "Free" if no bookings */}
                           {bookingsWithPositions.length === 0 && (
                             <div className="absolute inset-0 flex items-center justify-center text-emerald-400 font-semibold text-sm">
-                              ✓ Beschikbaar
+                              ✓ {t('available')}
                             </div>
                           )}
                         </td>
@@ -745,9 +745,9 @@ export default function DashboardPage() {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">
-                    {editingBooking ? '✏️ Bewerk' : '📅 Boek'} {selectedRoom.name}
+                    {editingBooking ? `✏️ ${t('editBooking')}` : `📅 ${t('bookRoom')}`} {selectedRoom.name}
                   </h2>
-                  <p className="text-teal-200 text-sm">{selectedRoom.location} • 👥 {selectedRoom.capacity} personen</p>
+                  <p className="text-teal-200 text-sm">{selectedRoom.location} • 👥 {selectedRoom.capacity} {t('people')}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -764,7 +764,7 @@ export default function DashboardPage() {
               {bookingSuccess ? (
                 <div className="bg-green-500/20 border border-green-500 rounded-lg p-6 text-center">
                   <div className="text-6xl mb-4">✅</div>
-                  <p className="text-white font-bold text-xl">Boeking Succesvol!</p>
+                  <p className="text-white font-bold text-xl">{t('bookingSuccessful')}</p>
                   <p className="text-teal-200 mt-2">Je boeking is bevestigd</p>
                 </div>
               ) : (
@@ -776,30 +776,30 @@ export default function DashboardPage() {
                   )}
 
                   <div>
-                    <label className="block text-white font-semibold mb-2">Titel *</label>
+                    <label className="block text-white font-semibold mb-2">{t('title')} *</label>
                     <input
                       type="text"
                       required
                       value={bookingForm.title}
                       onChange={(e) => setBookingForm({ ...bookingForm, title: e.target.value })}
                       className="w-full px-4 py-2 rounded-lg border-2 border-teal-400 bg-white/10 text-white placeholder-teal-300 focus:outline-none focus:border-cyan-400"
-                      placeholder="Bijvoorbeeld: Team Meeting"
+                      placeholder={t('titlePlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-white font-semibold mb-2">Beschrijving</label>
+                    <label className="block text-white font-semibold mb-2">{t('description')}</label>
                     <textarea
                       value={bookingForm.description}
                       onChange={(e) => setBookingForm({ ...bookingForm, description: e.target.value })}
                       className="w-full px-4 py-2 rounded-lg border-2 border-teal-400 bg-white/10 text-white placeholder-teal-300 focus:outline-none focus:border-cyan-400 resize-none"
                       rows={3}
-                      placeholder="Optionele beschrijving..."
+                      placeholder={t('descriptionPlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-white font-semibold mb-2">Datum *</label>
+                    <label className="block text-white font-semibold mb-2">{t('date')} *</label>
                     <input
                       type="date"
                       required
@@ -812,7 +812,7 @@ export default function DashboardPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-white font-semibold mb-2">Start Tijd *</label>
+                      <label className="block text-white font-semibold mb-2">{t('startTime')} *</label>
                       <input
                         type="time"
                         required
@@ -822,7 +822,7 @@ export default function DashboardPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-white font-semibold mb-2">Eind Tijd *</label>
+                      <label className="block text-white font-semibold mb-2">{t('endTime')} *</label>
                       <input
                         type="time"
                         required
@@ -847,7 +847,7 @@ export default function DashboardPage() {
                       type="submit"
                       className="flex-1 bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white font-bold py-3 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:scale-105"
                     >
-                      {editingBooking ? '💾 Opslaan' : '✅ Bevestigen'}
+                      {editingBooking ? `💾 ${t('save')}` : `✅ ${t('confirm')}`}
                     </button>
                     <button
                       type="button"
@@ -858,7 +858,7 @@ export default function DashboardPage() {
                       }}
                       className="flex-1 bg-gray-600/60 hover:bg-gray-700/70 backdrop-blur-md border border-gray-400/30 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
                     >
-                      Annuleren
+                      {t('cancel')}
                     </button>
                   </div>
                 </form>
