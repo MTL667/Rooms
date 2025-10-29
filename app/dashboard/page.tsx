@@ -41,6 +41,13 @@ export default function DashboardPage() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [draggingBooking, setDraggingBooking] = useState<{ booking: Booking; sourceRoom: Room } | null>(null);
   const [dropTargetRoom, setDropTargetRoom] = useState<string | null>(null);
+  const [resizingBooking, setResizingBooking] = useState<{
+    booking: Booking;
+    room: Room;
+    handle: 'start' | 'end';
+    originalStart: Date;
+    originalEnd: Date;
+  } | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -189,6 +196,134 @@ export default function DashboardPage() {
     setDraggingBooking(null);
     setDropTargetRoom(null);
   };
+
+  const handleResizeStart = (booking: Booking, room: Room, handle: 'start' | 'end', e: React.MouseEvent) => {
+    e.stopPropagation();
+    setResizingBooking({
+      booking,
+      room,
+      handle,
+      originalStart: new Date(booking.start),
+      originalEnd: new Date(booking.end),
+    });
+  };
+
+  const handleResizeMove = (e: MouseEvent) => {
+    if (!resizingBooking) return;
+
+    const timelineElement = document.querySelector(`[data-room-id="${resizingBooking.room.id}"]`);
+    if (!timelineElement) return;
+
+    const rect = timelineElement.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    
+    // Convert percentage to time (6:00 - 23:00 = 17 hours)
+    const totalMinutes = (percentage / 100) * 17 * 60;
+    const hour = Math.floor(totalMinutes / 60) + 6;
+    const minute = Math.round((totalMinutes % 60) / 15) * 15; // Round to 15 min intervals
+
+    const newDate = new Date(resizingBooking.originalStart);
+    newDate.setHours(hour, minute, 0, 0);
+
+    // Update the booking in state temporarily for visual feedback
+    const updatedRooms = rooms.map(room => {
+      if (room.id === resizingBooking.room.id) {
+        return {
+          ...room,
+          bookings: room.bookings.map(b => {
+            if (b.id === resizingBooking.booking.id) {
+              if (resizingBooking.handle === 'start') {
+                // Don't allow start to go past end
+                if (newDate < new Date(b.end)) {
+                  return { ...b, start: newDate.toISOString() };
+                }
+              } else {
+                // Don't allow end to go before start
+                if (newDate > new Date(b.start)) {
+                  return { ...b, end: newDate.toISOString() };
+                }
+              }
+            }
+            return b;
+          }),
+        };
+      }
+      return room;
+    });
+    setRooms(updatedRooms);
+  };
+
+  const handleResizeEnd = async () => {
+    if (!resizingBooking || !session?.user?.email) {
+      setResizingBooking(null);
+      return;
+    }
+
+    const currentBooking = rooms
+      .find(r => r.id === resizingBooking.room.id)
+      ?.bookings.find(b => b.id === resizingBooking.booking.id);
+
+    if (!currentBooking) {
+      setResizingBooking(null);
+      return;
+    }
+
+    const newStart = new Date(currentBooking.start);
+    const newEnd = new Date(currentBooking.end);
+
+    // Check if times actually changed
+    if (
+      newStart.getTime() === resizingBooking.originalStart.getTime() &&
+      newEnd.getTime() === resizingBooking.originalEnd.getTime()
+    ) {
+      setResizingBooking(null);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/bookings/${resizingBooking.booking.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          start: newStart.toISOString(),
+          end: newEnd.toISOString(),
+          userEmail: session.user.email,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to resize booking');
+      }
+
+      // Success - reload rooms
+      loadRooms();
+    } catch (error: any) {
+      alert(`Kon booking niet aanpassen: ${error.message}`);
+      // Reload to revert changes
+      loadRooms();
+    } finally {
+      setResizingBooking(null);
+    }
+  };
+
+  // Add global mouse event listeners for resize
+  useEffect(() => {
+    if (resizingBooking) {
+      const handleMouseMove = (e: MouseEvent) => handleResizeMove(e);
+      const handleMouseUp = () => handleResizeEnd();
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [resizingBooking, rooms]);
 
   const handleSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -483,6 +618,7 @@ export default function DashboardPage() {
                               ? 'bg-gradient-to-br from-cyan-500/30 to-teal-500/30' 
                               : 'bg-gradient-to-br from-emerald-500/10 to-teal-500/10'
                           }`}
+                          data-room-id={room.id}
                           onDragOver={(e) => handleDragOver(room.id, e)}
                           onDragLeave={() => handleDragLeave(room.id)}
                           onDrop={(e) => handleDrop(room, e)}
@@ -502,24 +638,40 @@ export default function DashboardPage() {
                           {bookingsWithPositions.map((booking, idx) => {
                             const isOwner = booking.userId === session?.user?.id;
                             const isDragging = draggingBooking?.booking.id === booking.id;
+                            const isResizing = resizingBooking?.booking.id === booking.id;
                             return (
                               <div
                                 key={booking.id}
-                                draggable={isOwner}
-                                onDragStart={(e) => isOwner && handleDragStart(booking, room, e)}
+                                draggable={isOwner && !isResizing}
+                                onDragStart={(e) => isOwner && !isResizing && handleDragStart(booking, room, e)}
                                 onDragEnd={handleDragEnd}
-                                onClick={() => isOwner && !isDragging && handleEditBooking(booking, room)}
-                                className={`absolute top-1 bottom-1 bg-gradient-to-r from-red-500/80 to-pink-500/80 backdrop-blur-sm border-2 border-red-400/40 rounded-lg shadow-lg flex items-center justify-center overflow-hidden group hover:shadow-xl transition-all ${
+                                onClick={() => isOwner && !isDragging && !isResizing && handleEditBooking(booking, room)}
+                                className={`absolute top-1 bottom-1 bg-gradient-to-r from-red-500/80 to-pink-500/80 backdrop-blur-sm border-2 border-red-400/40 rounded-lg shadow-lg flex items-center justify-center overflow-visible group hover:shadow-xl transition-all ${
                                   isOwner ? 'cursor-move hover:scale-105 hover:border-red-300' : 'cursor-default'
-                                } ${isDragging ? 'opacity-50 scale-95' : ''}`}
+                                } ${isDragging ? 'opacity-50 scale-95' : ''} ${isResizing ? 'ring-2 ring-yellow-400' : ''}`}
                                 style={{
                                   left: `${booking.startPos}%`,
                                   width: `${booking.width}%`,
-                                  zIndex: 10 + idx,
+                                  zIndex: isResizing ? 50 : 10 + idx,
                                 }}
-                                title={`${booking.title}\n${booking.startTime} - ${booking.endTime}${isOwner ? '\n\nKlik om te bewerken of sleep naar andere room' : ''}`}
+                                title={`${booking.title}\n${booking.startTime} - ${booking.endTime}${isOwner ? '\n\nKlik: bewerken | Sleep: verplaats room | Randen: aanpassen tijd' : ''}`}
                               >
-                                <div className="text-white text-xs font-bold px-2 truncate flex items-center gap-1">
+                                {/* Left resize handle */}
+                                {isOwner && (
+                                  <div
+                                    className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-yellow-400/50 transition-colors z-10"
+                                    onMouseDown={(e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      handleResizeStart(booking, room, 'start', e);
+                                    }}
+                                    title="Sleep om starttijd aan te passen"
+                                  >
+                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-yellow-400/70 rounded-r" />
+                                  </div>
+                                )}
+
+                                <div className="text-white text-xs font-bold px-2 truncate flex items-center gap-1 pointer-events-none">
                                   {isOwner && booking.width > 5 && (
                                     <span className="text-yellow-300">✏️</span>
                                   )}
@@ -530,6 +682,21 @@ export default function DashboardPage() {
                                     <span className="ml-2">• {booking.title}</span>
                                   )}
                                 </div>
+
+                                {/* Right resize handle */}
+                                {isOwner && (
+                                  <div
+                                    className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-yellow-400/50 transition-colors z-10"
+                                    onMouseDown={(e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      handleResizeStart(booking, room, 'end', e);
+                                    }}
+                                    title="Sleep om eindtijd aan te passen"
+                                  >
+                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-yellow-400/70 rounded-l" />
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
