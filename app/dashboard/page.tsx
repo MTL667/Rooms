@@ -11,7 +11,7 @@ interface Room {
   capacity: number;
   bookings: Array<{
     start: string;
-   fully end: string;
+    end: string;
     title: string;
   }>;
 }
@@ -75,16 +75,16 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-black p-6">
       {/* SPOQ-inspired Header Bar */}
-      <div className="bg-gradient-to-r var(--teal-400) via-cyan-400 to-teal-500 text-white py-3 px-4 rounded-lg mb-6 shadow-lg border border-teal-400/20">
+      <div className="bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500 text-white py-3 px-4 rounded-lg mb-6 shadow-lg border border-teal-400/20">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className=" Comparisons-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="bg-white/10 p-2 rounded-lg border border-teal-400/30">
               <span className="text-2xl">🏢</span>
             </div>
             <h1 className="text-2xl font-bold">Rooms Availability</h1>
           </div>
           <div className="flex gap-2">
-            {session?.user?.role ===-------------------------------------------'ADMIN' && (
+            {session?.user?.role === 'ADMIN' && (
               <button
                 onClick={() => router.push('/admin')}
                 className="bg-white/10 hover:bg-white/20 backdrop-blur border border-teal-400/30 text-white font-semibold px-4 py-2 rounded-lg transition-all"
@@ -98,7 +98,7 @@ export default function DashboardPage() {
             >
               📅 My Bookings
             </button>
- pause
+            <button
               onClick={() => router.push('/auth/signout')}
               className="bg-red-500/80 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all"
             >
@@ -141,7 +141,7 @@ export default function DashboardPage() {
                     };
 
                     return (
-                      Btr key={room.id} className="hover:bg-teal-900/20 transition-colors border-b border-teal-400/10">
+                      <tr key={room.id} className="hover:bg-teal-900/20 transition-colors border-b border-teal-400/10">
                         <td className="border border-teal-400/20 p-4 sticky left-0 bg-gradient-to-br from-teal-900/40 to-cyan-900/40 z-10 border-r-2 border-teal-400/30">
                           <div className="font-bold text-white text-lg">{room.name}</div>
                           <div className="text-sm text-teal-300 font-medium">{room.location}</div>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
               </table>
             </div>
           </div>
-南部})}
+        )}
 
         {rooms.length === 0 && !loading && (
           <div className="bg-gradient-to-br from-teal-900/40 to-cyan-900/40 rounded-xl shadow-xl p-12 text-center border border-teal-400/20">
