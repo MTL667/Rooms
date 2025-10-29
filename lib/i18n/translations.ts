@@ -4,7 +4,7 @@ export const translations = {
   nl: {
     // Navigation
     dashboard: 'Dashboard',
-    myBookings: 'Mijn Boekingen',
+    myBookings: 'Boekingen',
     floorPlan: 'Plattegrond',
     admin: 'Admin',
     signOut: 'Afmelden',
@@ -12,7 +12,7 @@ export const translations = {
     back: 'Terug',
     
     // Dashboard
-    roomsAvailability: 'Rooms Beschikbaarheid',
+    roomsAvailability: 'Beschikbaarheid',
     today: 'Vandaag',
     previousDay: 'Vorige dag',
     nextDay: 'Volgende dag',
@@ -99,15 +99,15 @@ export const translations = {
   fr: {
     // Navigation
     dashboard: 'Tableau de bord',
-    myBookings: 'Mes Réservations',
-    floorPlan: 'Plan d\'étage',
+    myBookings: 'Réservations',
+    floorPlan: 'Plan',
     admin: 'Admin',
     signOut: 'Déconnexion',
     signIn: 'Connexion',
     back: 'Retour',
     
     // Dashboard
-    roomsAvailability: 'Disponibilité des Salles',
+    roomsAvailability: 'Disponibilité',
     today: 'Aujourd\'hui',
     previousDay: 'Jour précédent',
     nextDay: 'Jour suivant',
@@ -194,7 +194,7 @@ export const translations = {
   en: {
     // Navigation
     dashboard: 'Dashboard',
-    myBookings: 'My Bookings',
+    myBookings: 'Bookings',
     floorPlan: 'Floor Plan',
     admin: 'Admin',
     signOut: 'Sign Out',
@@ -202,7 +202,7 @@ export const translations = {
     back: 'Back',
     
     // Dashboard
-    roomsAvailability: 'Rooms Availability',
+    roomsAvailability: 'Availability',
     today: 'Today',
     previousDay: 'Previous day',
     nextDay: 'Next day',
