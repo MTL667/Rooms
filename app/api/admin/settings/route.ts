@@ -1,14 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { headers } from 'next/headers';
+import { getToken } from 'next-auth/jwt';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const headersList = await headers();
-    const cookie = headersList.get('cookie');
+    // Check authentication
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     
-    if (!cookie?.includes('next-auth.session-token')) {
+    if (!token?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if user is admin
+    const user = await prisma.user.findUnique({
+      where: { email: token.email },
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const settings = await prisma.settings.findMany();
@@ -29,17 +38,26 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const headersList = await headers();
-    const cookie = headersList.get('cookie');
+    // Check authentication
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     
-    if (!cookie?.includes('next-auth.session-token')) {
+    if (!token?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if user is admin
+    const user = await prisma.user.findUnique({
+      where: { email: token.email },
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await req.json();
     const { key, value } = body;
 
-    if (!key || !value) {
+    if (!key || value === undefined) {
       return NextResponse.json(
         { error: 'Key and value are required' },
         { status: 400 }
