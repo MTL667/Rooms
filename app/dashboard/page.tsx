@@ -63,7 +63,12 @@ export default function DashboardPage() {
     // Load custom logo
     fetch('/api/settings/logo')
       .then(res => res.json())
-      .then(data => setLogoUrl(data.logoUrl))
+      .then(data => {
+        console.log('Logo data received:', data);
+        if (data.logoUrl) {
+          setLogoUrl(data.logoUrl);
+        }
+      })
       .catch(err => console.error('Error fetching logo:', err));
   }, []);
 
@@ -521,11 +526,17 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             {logoUrl ? (
-              <img 
-                src={logoUrl} 
-                alt="Logo" 
-                className="h-8 object-contain"
-              />
+              <div className="h-8 flex items-center">
+                <img 
+                  src={logoUrl} 
+                  alt="Company Logo" 
+                  className="h-full max-h-8 w-auto object-contain"
+                  onError={(e) => {
+                    console.error('Failed to load logo:', logoUrl);
+                    setLogoUrl(null);
+                  }}
+                />
+              </div>
             ) : (
               <div className="bg-white/10 p-1.5 rounded-lg border border-teal-400/30">
                 <span className="text-xl">🏢</span>
