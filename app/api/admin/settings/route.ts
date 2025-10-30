@@ -1,23 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getToken } from 'next-auth/jwt';
 
 export async function GET(req: Request) {
   try {
-    // Check authentication
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    
-    if (!token?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Get user email from query parameter
+    const { searchParams } = new URL(req.url);
+    const userEmail = searchParams.get('userEmail');
+
+    if (!userEmail) {
+      return NextResponse.json({ error: 'User email required' }, { status: 400 });
     }
 
     // Check if user is admin
     const user = await prisma.user.findUnique({
-      where: { email: token.email },
+      where: { email: userEmail },
     });
 
     if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
     const settings = await prisma.settings.findMany();
@@ -38,24 +38,21 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    // Check authentication
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    
-    if (!token?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const body = await req.json();
+    const { key, value, userEmail } = body;
+
+    if (!userEmail) {
+      return NextResponse.json({ error: 'User email required' }, { status: 400 });
     }
 
     // Check if user is admin
     const user = await prisma.user.findUnique({
-      where: { email: token.email },
+      where: { email: userEmail },
     });
 
     if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
-
-    const body = await req.json();
-    const { key, value } = body;
 
     if (!key || value === undefined) {
       return NextResponse.json(

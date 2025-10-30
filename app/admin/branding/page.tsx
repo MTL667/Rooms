@@ -20,12 +20,16 @@ export default function BrandingPage() {
   }, [status, session, router]);
 
   useEffect(() => {
-    loadSettings();
-  }, []);
+    if (session?.user?.email) {
+      loadSettings();
+    }
+  }, [session]);
 
   const loadSettings = async () => {
+    if (!session?.user?.email) return;
+    
     try {
-      const res = await fetch('/api/admin/settings');
+      const res = await fetch(`/api/admin/settings?userEmail=${encodeURIComponent(session.user.email)}`);
       const data = await res.json();
       setLogoUrl(data.logo_url || '');
     } catch (error) {
@@ -73,7 +77,11 @@ export default function BrandingPage() {
       const settingsRes = await fetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'logo_url', value: url }),
+        body: JSON.stringify({ 
+          key: 'logo_url', 
+          value: url,
+          userEmail: session?.user?.email 
+        }),
       });
 
       if (!settingsRes.ok) {
@@ -96,7 +104,11 @@ export default function BrandingPage() {
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'logo_url', value: '' }),
+        body: JSON.stringify({ 
+          key: 'logo_url', 
+          value: '',
+          userEmail: session?.user?.email 
+        }),
       });
 
       if (!res.ok) {
