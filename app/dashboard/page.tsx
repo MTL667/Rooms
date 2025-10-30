@@ -542,7 +542,7 @@ export default function DashboardPage() {
                 <span className="text-xl">🏢</span>
               </div>
             )}
-            <h1 className="text-xl font-bold">{t('roomsAvailability')}</h1>
+            <h1 className="text-xl font-bold">Rooms</h1>
           </div>
           <div className="flex gap-2 items-center flex-wrap">
             {/* Date Navigation */}
@@ -617,7 +617,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto">
         {/* Date Display Card */}
         <div className="bg-gradient-to-br from-teal-900 to-cyan-900 rounded-xl shadow-2xl p-6 mb-6 border-2 border-teal-400">
-          <h2 className="text-3xl font-bold text-white mb-2">📅 {t('roomsAvailability')}</h2>
+          <h2 className="text-3xl font-bold text-white mb-2">📅 Rooms</h2>
           <p className="text-teal-200 text-lg">
             {formatDisplayDate(selectedDate)}
             {isToday(selectedDate) && <span className="ml-2 text-cyan-300 font-semibold">({t('today')})</span>}
