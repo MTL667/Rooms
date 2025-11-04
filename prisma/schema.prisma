@@ -30,13 +30,20 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum TenantStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model AllowedTenant {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tenantId  String   @unique
+  id        String       @id @default(cuid())
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  tenantId  String       @unique
   name      String?
-  active    Boolean  @default(true)
+  active    Boolean      @default(true)
+  status    TenantStatus @default(PENDING)
 }
 
 model User {

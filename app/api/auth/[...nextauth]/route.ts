@@ -33,14 +33,21 @@ const authOptions = {
             });
 
             if (!tenant) {
-              console.log('Creating new tenant:', profile.tid);
+              console.log('Creating new tenant (PENDING approval):', profile.tid);
               tenant = await prisma.allowedTenant.create({
                 data: {
                   tenantId: profile.tid,
-                  name: 'Auto-created tenant',
-                  active: true,
+                  name: profile.tenantName || 'Pending tenant',
+                  active: false,
+                  status: 'PENDING',
                 },
               });
+            }
+
+            // Check if tenant is approved
+            if (tenant.status !== 'APPROVED') {
+              console.log('Tenant not approved:', profile.tid, 'Status:', tenant.status);
+              return `/auth/pending?tenant=${encodeURIComponent(tenant.name || 'Unknown')}`;
             }
 
             // Check if this tenant already has ANY users
