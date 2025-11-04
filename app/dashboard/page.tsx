@@ -714,11 +714,11 @@ export default function DashboardPage() {
                     )}
                   </div>
                   
-                  <div className="relative h-64">
+                  <div className="relative h-64 bg-white">
                     <img
                       src={floorPlan.imageUrl}
                       alt={floorPlan.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                     
                     {/* Room Overlays */}

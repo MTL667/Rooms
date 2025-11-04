@@ -251,7 +251,7 @@ export default function FloorPlanView() {
               <img
                 src={currentFloorPlan.imageUrl}
                 alt={currentFloorPlan.name}
-                className="w-full"
+                className="w-full h-auto object-contain"
               />
               
               {/* Room Areas */}
