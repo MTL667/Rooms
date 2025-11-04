@@ -188,16 +188,31 @@ export async function getMicrosoftRooms(): Promise<RoomResource[]> {
       
       try {
         // Try to get rooms directly via findRooms
-        console.log('Calling Graph API: GET /users (filter: Resource + Room)');
+        console.log('Calling Graph API: GET /users (filter: Resource type)');
         const response = await client
           .api('/users')
-          .filter("userType eq 'Resource' and resourceProvisioningOptions/Any(x:x eq 'Room')")
-          .select('id,displayName,mail,mailboxSettings')
+          .filter("userType eq 'Resource'")
+          .select('id,displayName,mail,mailboxSettings,resourceProvisioningOptions,resourceType')
           .get();
 
-        console.log(`✅ Found ${response.value?.length || 0} rooms via users API`);
+        console.log(`✅ Found ${response.value?.length || 0} resource accounts`);
 
-        return response.value.map((room: any) => ({
+        // Filter for rooms - check various properties
+        const rooms = response.value.filter((user: any) => {
+          // Check if it has Room in resourceProvisioningOptions
+          const hasRoomOption = user.resourceProvisioningOptions?.includes('Room');
+          // Check if displayName doesn't contain certain keywords (like "Equipment")
+          const isRoom = !user.displayName?.toLowerCase().includes('equipment');
+          // Log for debugging
+          if (hasRoomOption || (isRoom && user.mail)) {
+            console.log(`Found room: ${user.displayName} (${user.mail})`);
+          }
+          return hasRoomOption || (isRoom && user.mail);
+        });
+
+        console.log(`✅ Filtered to ${rooms.length} room resources`);
+
+        return rooms.map((room: any) => ({
           id: room.id,
           displayName: room.displayName,
           emailAddress: room.mail,
