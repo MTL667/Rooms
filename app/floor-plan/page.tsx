@@ -4,9 +4,6 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-// Force dynamic rendering to avoid build-time errors with useSearchParams
-export const dynamic = 'force-dynamic';
-
 interface Booking {
   id: string;
   start: string;
@@ -35,7 +32,7 @@ interface FloorPlan {
   rooms: Room[];
 }
 
-export default function FloorPlanView() {
+function FloorPlanContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -507,3 +504,17 @@ export default function FloorPlanView() {
   );
 }
 
+export default function FloorPlanView() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400 mx-auto mb-4"></div>
+          <p className="text-gray-900 font-semibold">Loading...</p>
+        </div>
+      </div>
+    }>
+      <FloorPlanContent />
+    </Suspense>
+  );
+}
