@@ -335,6 +335,7 @@ export async function createRoomBooking(
         displayName: roomEmail,
       },
       attendees: [
+        // Add the room as a resource attendee
         {
           emailAddress: {
             address: roomEmail,
@@ -342,13 +343,31 @@ export async function createRoomBooking(
           },
           type: 'resource',
         },
+        // Add the organizer as a required attendee
+        {
+          emailAddress: {
+            address: organizerEmail,
+            name: organizerEmail,
+          },
+          type: 'required',
+        },
       ],
+      isReminderOn: true,
+      reminderMinutesBeforeStart: 15,
     };
 
+    console.log(`Creating calendar event for room: ${roomEmail}`);
+    console.log(`Organizer: ${organizerEmail}`);
+    console.log(`Time: ${startTime.toISOString()} - ${endTime.toISOString()}`);
+
     // Create event on the organizer's calendar
+    // This will automatically send invitations to the room resource
     const createdEvent = await client
       .api(`/users/${organizerEmail}/calendar/events`)
       .post(event);
+
+    console.log(`✅ Calendar event created: ${createdEvent.id}`);
+    console.log(`Event will appear in organizer's calendar and room will receive invitation`);
 
     return {
       id: createdEvent.id,
