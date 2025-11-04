@@ -714,49 +714,51 @@ export default function DashboardPage() {
                     )}
                   </div>
                   
-                  <div className="relative h-64 bg-white">
-                    <img
-                      src={floorPlan.imageUrl}
-                      alt={floorPlan.name}
-                      className="w-full h-full object-contain"
-                    />
-                    
-                    {/* Room Overlays */}
-                    {floorPlan.rooms
-                      .filter((room) => room.positionX !== null && room.positionY !== null)
-                      .map((room) => {
-                        const available = isRoomAvailable(room);
-                        const hasArea = room.areaWidth !== null && room.areaHeight !== null && room.areaWidth > 0 && room.areaHeight > 0;
-                        
-                        return (
-                          <div
-                            key={room.id}
-                            className={`absolute border-2 border-white shadow-lg flex items-center justify-center text-white font-bold transition-all ${
-                              available
-                                ? 'bg-green-500/70'
-                                : 'bg-red-500/70'
-                            } ${hasArea ? 'rounded-lg' : 'rounded-full w-8 h-8 transform -translate-x-1/2 -translate-y-1/2'}`}
-                            style={hasArea ? {
-                              left: `${room.positionX}%`,
-                              top: `${room.positionY}%`,
-                              width: `${room.areaWidth}%`,
-                              height: `${room.areaHeight}%`,
-                            } : {
-                              left: `${room.positionX}%`,
-                              top: `${room.positionY}%`,
-                            }}
-                            title={`${room.name} - ${available ? t('available') : 'Bezet'}`}
-                          >
-                            {hasArea ? (
-                              <div className="text-center p-1">
-                                <div className="font-bold text-xs drop-shadow-lg">{room.name}</div>
-                              </div>
-                            ) : (
-                              <span className="text-xs">{available ? '✓' : '✕'}</span>
-                            )}
-                          </div>
-                        );
-                      })}
+                  <div className="relative bg-white max-h-64 flex items-center justify-center">
+                    <div className="relative w-full">
+                      <img
+                        src={floorPlan.imageUrl}
+                        alt={floorPlan.name}
+                        className="w-full h-auto max-h-64 object-contain mx-auto"
+                      />
+                      
+                      {/* Room Overlays */}
+                      {floorPlan.rooms
+                        .filter((room) => room.positionX !== null && room.positionY !== null)
+                        .map((room) => {
+                          const available = isRoomAvailable(room);
+                          const hasArea = room.areaWidth !== null && room.areaHeight !== null && room.areaWidth > 0 && room.areaHeight > 0;
+                          
+                          return (
+                            <div
+                              key={room.id}
+                              className={`absolute border-2 border-white shadow-lg flex items-center justify-center text-white font-bold transition-all ${
+                                available
+                                  ? 'bg-green-500/70'
+                                  : 'bg-red-500/70'
+                              } ${hasArea ? 'rounded-lg' : 'rounded-full w-8 h-8 transform -translate-x-1/2 -translate-y-1/2'}`}
+                              style={hasArea ? {
+                                left: `${room.positionX}%`,
+                                top: `${room.positionY}%`,
+                                width: `${room.areaWidth}%`,
+                                height: `${room.areaHeight}%`,
+                              } : {
+                                left: `${room.positionX}%`,
+                                top: `${room.positionY}%`,
+                              }}
+                              title={`${room.name} - ${available ? t('available') : 'Bezet'}`}
+                            >
+                              {hasArea ? (
+                                <div className="text-center p-1">
+                                  <div className="font-bold text-xs drop-shadow-lg">{room.name}</div>
+                                </div>
+                              ) : (
+                                <span className="text-xs">{available ? '✓' : '✕'}</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
                   </div>
                   
                   <div className="p-4">
