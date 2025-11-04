@@ -140,6 +140,25 @@ export default function RoomsManagement() {
     }
   };
 
+  const clearBookings = async (id: string) => {
+    if (!confirm('⚠️ This will permanently delete ALL bookings for this room. Continue?')) return;
+    try {
+      const res = await fetch(`/api/admin/rooms/${id}?action=clear-bookings`, { 
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ Cleared ${data.count} bookings for this room`);
+        loadRooms();
+      } else {
+        alert('Error clearing bookings');
+      }
+    } catch (error) {
+      console.error('Error clearing bookings:', error);
+      alert('Error clearing bookings');
+    }
+  };
+
   if (loading) return <div className="p-6 bg-white">Loading...</div>;
 
   return (
@@ -324,6 +343,15 @@ export default function RoomsManagement() {
                       >
                         ✏️ Edit
                       </button>
+                      {room._count.bookings > 0 && (
+                        <button
+                          onClick={() => clearBookings(room.id)}
+                          className="bg-orange-500/60 hover:bg-orange-600/70 backdrop-blur-md border border-orange-400/30 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                          title={`Clear ${room._count.bookings} bookings`}
+                        >
+                          🗑️ Clear ({room._count.bookings})
+                        </button>
+                      )}
                       <button
                         onClick={() => deleteRoom(room.id)}
                         className="bg-red-500/60 hover:bg-red-600/70 backdrop-blur-md border border-red-400/30 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
