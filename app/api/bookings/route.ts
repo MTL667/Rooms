@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createRoomBooking } from "@/lib/microsoft-graph";
+import { sendBookingConfirmationEmail } from "@/lib/sendgrid";
 
 export async function POST(req: Request) {
   try {
@@ -116,6 +117,22 @@ export async function POST(req: Request) {
         user: true,
       },
     });
+
+    // Send confirmation email
+    try {
+      await sendBookingConfirmationEmail({
+        userEmail: userEmail,
+        userName: user.name || undefined,
+        roomName: room.name,
+        roomEmail: room.msResourceEmail || `${room.name}@rooms.local`,
+        startTime: startDate,
+        endTime: endDate,
+        title: title,
+        description: description,
+      });
+    } catch (emailError) {
+      console.error('Email sending failed but booking was created:', emailError);
+    }
 
     return NextResponse.json({ 
       booking,
