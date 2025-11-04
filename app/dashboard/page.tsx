@@ -1015,7 +1015,7 @@ export default function DashboardPage() {
                       <label className="block text-white font-semibold mb-2">🏢 Room *</label>
                       <select
                         required
-                        value={selectedRoom?.id || ''}
+                        defaultValue=""
                         onChange={(e) => {
                           const room = rooms.find(r => r.id === e.target.value);
                           setSelectedRoom(room || null);
