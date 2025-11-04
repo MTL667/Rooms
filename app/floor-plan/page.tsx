@@ -75,7 +75,7 @@ export default function FloorPlanView() {
       const urlFloorPlanId = searchParams.get('id');
       
       if (plans.length > 0) {
-        if (urlFloorPlanId && plans.some(p => p.id === urlFloorPlanId)) {
+        if (urlFloorPlanId && plans.some((p: FloorPlan) => p.id === urlFloorPlanId)) {
           // Select the floor plan from URL
           setSelectedFloorPlan(urlFloorPlanId);
         } else if (!selectedFloorPlan) {
