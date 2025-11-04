@@ -194,55 +194,18 @@ export async function getMicrosoftRooms(): Promise<RoomResource[]> {
       });
       
       try {
-        // Try to get rooms directly - get all users and filter for resources
-        console.log('Calling Graph API: GET /users (with pagination)');
+        // Try to get rooms directly - fetch all users
+        console.log('Calling Graph API: GET /users');
         
-        const allUsers: any[] = [];
-        let pageUrl: string | null = '/users?$select=id,displayName,mail,mailboxSettings,resourceProvisioningOptions&$top=100';
-        let pageCount = 0;
+        const response = await client
+          .api('/users')
+          .select('id,displayName,mail,mailboxSettings,resourceProvisioningOptions')
+          .get();
 
-        // Paginate through all users
-        while (pageUrl && pageCount < 50) { // Safety limit: max 50 pages
-          pageCount++;
-          console.log(`Fetching page ${pageCount} of users...`);
-          
-          try {
-            let response;
-            if (pageUrl.startsWith('/')) {
-              // First page: use filtered API call
-              response = await client
-                .api('/users')
-                .select('id,displayName,mail,mailboxSettings,resourceProvisioningOptions')
-                .top(100)
-                .get();
-            } else {
-              // Subsequent pages: use the @odata.nextLink directly
-              response = await client
-                .api(pageUrl)
-                .get();
-            }
-
-            if (response.value && response.value.length > 0) {
-              console.log(`✅ Got ${response.value.length} users on page ${pageCount}`);
-              allUsers.push(...response.value);
-            }
-
-            // Check for next page
-            pageUrl = response['@odata.nextLink'] || null;
-            
-            if (!pageUrl) {
-              console.log(`✅ Fetched all pages (${pageCount} total)`);
-            }
-          } catch (pageError: any) {
-            console.error(`Error fetching page ${pageCount}:`, pageError.message);
-            break; // Stop pagination if error
-          }
-        }
-
-        console.log(`✅ Found ${allUsers.length} users/resources total`);
+        console.log(`✅ Found ${response.value?.length || 0} users/resources`);
 
         // Filter for room resources - look for accounts with mail that are resources
-        const rooms = allUsers.filter((user: any) => {
+        const rooms = response.value.filter((user: any) => {
           // Must have a mail address
           if (!user.mail) return false;
           
