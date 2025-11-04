@@ -17,11 +17,18 @@ class ClientCredentialsAuthProvider implements GraphAuthProvider {
     this.tenantId = tenantId;
   }
 
+  clearCache() {
+    this.tokenCache = null;
+  }
+
   async getAccessToken(): Promise<string> {
-    // Return cached token if still valid
+    // Return cached token if still valid (but not if too old - force refresh every 30 min)
     if (this.tokenCache && this.tokenCache.expiresAt > Date.now()) {
+      console.log('Using cached token');
       return this.tokenCache.token;
     }
+
+    console.log('Fetching new access token...');
 
     const tokenEndpoint = `https://login.microsoftonline.com/${this.tenantId}/oauth2/v2.0/token`;
     
@@ -45,6 +52,19 @@ class ClientCredentialsAuthProvider implements GraphAuthProvider {
       }
 
       const data = await response.json();
+      
+      console.log('Token received, expires in:', data.expires_in, 'seconds');
+      console.log('Token type:', data.token_type);
+      
+      // Decode token to see permissions (for debugging)
+      try {
+        const tokenParts = data.access_token.split('.');
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        console.log('Token permissions (roles):', payload.roles || 'None');
+        console.log('Token scopes (scp):', payload.scp || 'None');
+      } catch (e) {
+        console.log('Could not decode token for debugging');
+      }
       
       // Cache token (subtract 5 minutes for safety)
       this.tokenCache = {
@@ -118,11 +138,12 @@ export async function getMicrosoftRooms(): Promise<RoomResource[]> {
     
     try {
       // Try to get all room lists
+      console.log('Calling Graph API: GET /places/microsoft.graph.roomlist');
       const roomLists = await client
         .api('/places/microsoft.graph.roomlist')
         .get();
 
-      console.log(`Found ${roomLists.value?.length || 0} room lists`);
+      console.log(`✅ Found ${roomLists.value?.length || 0} room lists`);
 
       const allRooms: RoomResource[] = [];
 
@@ -157,18 +178,24 @@ export async function getMicrosoftRooms(): Promise<RoomResource[]> {
       return allRooms;
     } catch (placesError: any) {
       // If Places API fails, try alternative approach using findRooms
-      console.log('Places API failed, trying alternative approach...');
-      console.error('Places API error:', placesError.message, placesError.statusCode);
+      console.log('❌ Places API failed, trying alternative approach...');
+      console.error('Places API error details:', {
+        message: placesError.message,
+        statusCode: placesError.statusCode,
+        code: placesError.code,
+        body: placesError.body,
+      });
       
       try {
         // Try to get rooms directly via findRooms
+        console.log('Calling Graph API: GET /users (filter: Resource + Room)');
         const response = await client
           .api('/users')
           .filter("userType eq 'Resource' and resourceProvisioningOptions/Any(x:x eq 'Room')")
           .select('id,displayName,mail,mailboxSettings')
           .get();
 
-        console.log(`Found ${response.value?.length || 0} rooms via users API`);
+        console.log(`✅ Found ${response.value?.length || 0} rooms via users API`);
 
         return response.value.map((room: any) => ({
           id: room.id,
@@ -180,8 +207,28 @@ export async function getMicrosoftRooms(): Promise<RoomResource[]> {
           phone: null,
         }));
       } catch (altError: any) {
-        console.error('Alternative approach also failed:', altError.message, altError.statusCode);
-        throw new Error(`Failed to fetch rooms from Microsoft Graph. Please ensure the app has the required permissions (Place.Read.All or Calendars.Read). Error: ${altError.message}`);
+        console.error('❌ Alternative approach also failed:', {
+          message: altError.message,
+          statusCode: altError.statusCode,
+          code: altError.code,
+          body: altError.body,
+        });
+        
+        const errorMsg = altError.message || 'Unknown error';
+        const errorCode = altError.statusCode || altError.code || 'N/A';
+        
+        throw new Error(
+          `Failed to fetch rooms from Microsoft Graph.\n\n` +
+          `Error Code: ${errorCode}\n` +
+          `Error: ${errorMsg}\n\n` +
+          `Required Permissions:\n` +
+          `- Place.Read.All (Application)\n` +
+          `- User.Read.All (Application)\n\n` +
+          `Please verify:\n` +
+          `1. Permissions are added as "Application" (not Delegated)\n` +
+          `2. Admin consent is granted\n` +
+          `3. Wait 5-10 minutes after granting consent for changes to propagate`
+        );
       }
     }
   } catch (error: any) {

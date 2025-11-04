@@ -228,27 +228,28 @@ export default function MicrosoftSyncPage() {
             Als de sync faalt, controleer of je Azure AD app registratie de volgende permissions heeft:
           </p>
           <div className="bg-white rounded-lg p-4 border-2 border-amber-300">
-            <h4 className="font-bold text-gray-900 mb-2">Microsoft Graph API Permissions:</h4>
+            <h4 className="font-bold text-gray-900 mb-2">Microsoft Graph API Permissions (Application type!):</h4>
             <ul className="space-y-2 text-sm">
+              <li className="flex items-start gap-2">
+                <span className="text-red-500 font-bold text-lg">⚠️</span>
+                <div>
+                  <code className="bg-red-100 px-2 py-1 rounded text-xs font-mono font-bold">User.Read.All</code>
+                  <span className="text-red-600 ml-2 font-bold">(Application) - VERPLICHT! Voor rooms ophalen</span>
+                  <div className="text-xs text-gray-600 mt-1">⚠️ Moet "Application" type zijn, NIET "Delegated"!</div>
+                </div>
+              </li>
               <li className="flex items-start gap-2">
                 <span className="text-teal-500 font-bold">✓</span>
                 <div>
                   <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">Place.Read.All</code>
-                  <span className="text-gray-600 ml-2">(Application) - Voor rooms ophalen</span>
+                  <span className="text-gray-600 ml-2">(Application) - Optioneel, voor officële Places API</span>
                 </div>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-teal-500 font-bold">✓</span>
                 <div>
                   <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">Calendars.ReadWrite</code>
-                  <span className="text-gray-600 ml-2">(Application) - Voor calendar events</span>
-                </div>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-teal-500 font-bold">✓</span>
-                <div>
-                  <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">User.Read.All</code>
-                  <span className="text-gray-600 ml-2">(Application) - Alternatief voor rooms</span>
+                  <span className="text-gray-600 ml-2">(Application) - Voor calendar events maken/updaten</span>
                 </div>
               </li>
             </ul>
