@@ -21,6 +21,23 @@ interface Room {
   location: string | null;
   capacity: number;
   bookings: Booking[];
+  positionX: number | null;
+  positionY: number | null;
+  areaWidth: number | null;
+  areaHeight: number | null;
+}
+
+interface FloorPlanRoom extends Room {
+  floorPlanId: string | null;
+}
+
+interface FloorPlan {
+  id: string;
+  name: string;
+  building: string | null;
+  floor: string | null;
+  imageUrl: string;
+  rooms: FloorPlanRoom[];
 }
 
 export default function DashboardPage() {
@@ -28,6 +45,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { t } = useLanguage();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -72,6 +90,20 @@ export default function DashboardPage() {
       .catch(err => console.error('Error fetching logo:', err));
   }, []);
 
+  const loadFloorPlans = () => {
+    if (!session) return;
+    const dateString = selectedDate.toISOString().split('T')[0];
+    fetch('/api/floor-plans', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => {
+        const plans = data.floorPlans || [];
+        setFloorPlans(plans);
+      })
+      .catch(err => {
+        console.error('Error fetching floor plans:', err);
+      });
+  };
+
   const loadRooms = () => {
     if (!session) return;
     const dateString = selectedDate.toISOString().split('T')[0];
@@ -85,6 +117,15 @@ export default function DashboardPage() {
         console.error('Error fetching rooms:', err);
         setLoading(false);
       });
+  };
+  
+  const isRoomAvailable = (room: FloorPlanRoom): boolean => {
+    const now = new Date();
+    return !room.bookings.some((booking) => {
+      const start = new Date(booking.start);
+      const end = new Date(booking.end);
+      return start <= now && end > now;
+    });
   };
 
   const handleBookRoom = (room: Room) => {
@@ -491,14 +532,22 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (session) {
+      loadFloorPlans();
       loadRooms();
       // Refresh every 30 seconds
-      const interval = setInterval(loadRooms, 30000);
+      const interval = setInterval(() => {
+        loadFloorPlans();
+        loadRooms();
+      }, 30000);
       // Refresh when window regains focus
-      window.addEventListener('focus', loadRooms);
+      const handleFocus = () => {
+        loadFloorPlans();
+        loadRooms();
+      };
+      window.addEventListener('focus', handleFocus);
       return () => {
         clearInterval(interval);
-        window.removeEventListener('focus', loadRooms);
+        window.removeEventListener('focus', handleFocus);
       };
     }
   }, [session, selectedDate]);
@@ -624,6 +673,117 @@ export default function DashboardPage() {
           </p>
         </div>
 
+        {/* Floor Plans Overview */}
+        {floorPlans.length > 0 && (
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-2xl font-bold text-gray-900">🗺️ {t('floorPlan')} {t('roomsAvailability')}</h3>
+              <button
+                onClick={() => {
+                  setShowBookingModal(true);
+                  setSelectedRoom(null);
+                  setEditingBooking(null);
+                  setBookingError(null);
+                  setBookingForm({
+                    title: '',
+                    description: '',
+                    date: selectedDate.toISOString().split('T')[0],
+                    startTime: '',
+                    endTime: '',
+                  });
+                }}
+                className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white font-bold px-6 py-3 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:scale-105"
+              >
+                📅 {t('bookRoom')} Meetingroom
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {floorPlans.map((floorPlan) => (
+                <div
+                  key={floorPlan.id}
+                  className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl shadow-lg border-2 border-teal-200 overflow-hidden hover:shadow-2xl transition-all cursor-pointer"
+                  onClick={() => router.push('/floor-plan')}
+                >
+                  <div className="bg-gradient-to-r from-teal-500 to-cyan-500 p-4">
+                    <h4 className="text-xl font-bold text-white">{floorPlan.name}</h4>
+                    {floorPlan.building && (
+                      <p className="text-teal-100 text-sm">
+                        {floorPlan.building} {floorPlan.floor && `- ${t('floorPlan')} ${floorPlan.floor}`}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="relative h-64">
+                    <img
+                      src={floorPlan.imageUrl}
+                      alt={floorPlan.name}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Room Overlays */}
+                    {floorPlan.rooms
+                      .filter((room) => room.positionX !== null && room.positionY !== null)
+                      .map((room) => {
+                        const available = isRoomAvailable(room);
+                        const hasArea = room.areaWidth !== null && room.areaHeight !== null && room.areaWidth > 0 && room.areaHeight > 0;
+                        
+                        return (
+                          <div
+                            key={room.id}
+                            className={`absolute border-2 border-white shadow-lg flex items-center justify-center text-white font-bold transition-all ${
+                              available
+                                ? 'bg-green-500/70'
+                                : 'bg-red-500/70'
+                            } ${hasArea ? 'rounded-lg' : 'rounded-full w-8 h-8 transform -translate-x-1/2 -translate-y-1/2'}`}
+                            style={hasArea ? {
+                              left: `${room.positionX}%`,
+                              top: `${room.positionY}%`,
+                              width: `${room.areaWidth}%`,
+                              height: `${room.areaHeight}%`,
+                            } : {
+                              left: `${room.positionX}%`,
+                              top: `${room.positionY}%`,
+                            }}
+                            title={`${room.name} - ${available ? t('available') : 'Bezet'}`}
+                          >
+                            {hasArea ? (
+                              <div className="text-center p-1">
+                                <div className="font-bold text-xs drop-shadow-lg">{room.name}</div>
+                              </div>
+                            ) : (
+                              <span className="text-xs">{available ? '✓' : '✕'}</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                  
+                  <div className="p-4">
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span className="text-gray-700 font-semibold">
+                          {floorPlan.rooms.filter(r => isRoomAvailable(r)).length} {t('available')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <span className="text-gray-700 font-semibold">
+                          {floorPlan.rooms.filter(r => !isRoomAvailable(r)).length} Bezet
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Table View */}
+        <h3 className="text-2xl font-bold text-gray-900 mb-4">📊 {t('roomsAvailability')} - Tijdlijn</h3>
+        
         {loading ? (
           <div className="bg-gradient-to-br from-teal-900/50 to-cyan-900/50 rounded-xl shadow-lg p-12 text-center border border-teal-400/20">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-400 mx-auto mb-4"></div>
@@ -813,16 +973,16 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Booking Modal */}
-      {showBookingModal && selectedRoom && (
+      {showBookingModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
           <div className="bg-gradient-to-br from-teal-900 to-cyan-900 rounded-xl shadow-2xl max-w-lg w-full border-2 border-teal-400">
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">
-                    {editingBooking ? `✏️ ${t('editBooking')}` : `📅 ${t('bookRoom')}`} {selectedRoom.name}
+                    {editingBooking ? `✏️ ${t('editBooking')}` : `📅 ${t('bookRoom')}`} {selectedRoom ? selectedRoom.name : 'Meetingroom'}
                   </h2>
-                  <p className="text-teal-200 text-sm">{selectedRoom.location} • 👥 {selectedRoom.capacity} {t('people')}</p>
+                  {selectedRoom && <p className="text-teal-200 text-sm">{selectedRoom.location} • 👥 {selectedRoom.capacity} {t('people')}</p>}
                 </div>
                 <button
                   onClick={() => {
@@ -847,6 +1007,28 @@ export default function DashboardPage() {
                   {bookingError && (
                     <div className="bg-red-500/20 border border-red-500 rounded-lg p-3 text-red-200 text-sm">
                       ⚠️ {bookingError}
+                    </div>
+                  )}
+
+                  {!selectedRoom && (
+                    <div>
+                      <label className="block text-white font-semibold mb-2">🏢 Room *</label>
+                      <select
+                        required
+                        value={selectedRoom?.id || ''}
+                        onChange={(e) => {
+                          const room = rooms.find(r => r.id === e.target.value);
+                          setSelectedRoom(room || null);
+                        }}
+                        className="w-full px-4 py-2 rounded-lg border-2 border-teal-400 bg-white/10 text-white focus:outline-none focus:border-cyan-400"
+                      >
+                        <option value="" className="text-gray-900">Selecteer een room</option>
+                        {rooms.map((room) => (
+                          <option key={room.id} value={room.id} className="text-gray-900">
+                            {room.name} ({room.location}) - {room.capacity} personen
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   )}
 
