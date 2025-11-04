@@ -67,6 +67,7 @@ export default function FloorPlanView() {
       const res = await fetch('/api/floor-plans');
       const data = await res.json();
       const plans = data.floorPlans || [];
+      console.log('Loaded floor plans:', plans.length, plans);
       setFloorPlans(plans);
       if (plans.length > 0 && !selectedFloorPlan) {
         setSelectedFloorPlan(plans[0].id);
@@ -247,53 +248,59 @@ export default function FloorPlanView() {
               </div>
             </div>
 
-            <div className="relative bg-white rounded-lg overflow-hidden">
-              <img
-                src={currentFloorPlan.imageUrl}
-                alt={currentFloorPlan.name}
-                className="w-full h-auto object-contain"
-              />
-              
-              {/* Room Areas */}
-              {currentFloorPlan.rooms
-                .filter((room) => room.positionX !== null && room.positionY !== null)
-                .map((room) => {
-                  const available = isRoomAvailable(room);
-                  const hasArea = room.areaWidth !== null && room.areaHeight !== null && room.areaWidth > 0 && room.areaHeight > 0;
-                  
-                  return (
-                    <button
-                      key={room.id}
-                      onClick={() => setSelectedRoom(room)}
-                      className={`absolute border-4 border-white shadow-lg flex items-center justify-center text-white font-bold transition-all hover:scale-105 hover:shadow-2xl cursor-pointer group ${
-                        available
-                          ? 'bg-green-500/70 hover:bg-green-600/80 border-green-300'
-                          : 'bg-red-500/70 hover:bg-red-600/80 border-red-300'
-                      } ${hasArea ? 'rounded-lg' : 'rounded-full w-10 h-10 transform -translate-x-1/2 -translate-y-1/2'}`}
-                      style={hasArea ? {
-                        left: `${room.positionX}%`,
-                        top: `${room.positionY}%`,
-                        width: `${room.areaWidth}%`,
-                        height: `${room.areaHeight}%`,
-                      } : {
-                        left: `${room.positionX}%`,
-                        top: `${room.positionY}%`,
-                      }}
-                      title={room.name}
-                    >
-                      {hasArea ? (
-                        <div className="text-center p-2">
-                          <div className="font-bold text-sm sm:text-base drop-shadow-lg">{room.name}</div>
-                          <div className="text-xs sm:text-sm opacity-90 drop-shadow-lg">
-                            {available ? '✓ Beschikbaar' : '✕ Bezet'}
+            <div className="relative bg-white rounded-lg overflow-hidden min-h-[400px] flex items-center justify-center">
+              <div className="relative inline-block max-w-full">
+                <img
+                  src={currentFloorPlan.imageUrl}
+                  alt={currentFloorPlan.name}
+                  className="max-w-full h-auto max-h-[600px] block"
+                  onError={(e) => {
+                    console.error('Failed to load floor plan image:', currentFloorPlan.imageUrl);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                
+                {/* Room Areas */}
+                {currentFloorPlan.rooms
+                  .filter((room) => room.positionX !== null && room.positionY !== null)
+                  .map((room) => {
+                    const available = isRoomAvailable(room);
+                    const hasArea = room.areaWidth !== null && room.areaHeight !== null && room.areaWidth > 0 && room.areaHeight > 0;
+                    
+                    return (
+                      <button
+                        key={room.id}
+                        onClick={() => setSelectedRoom(room)}
+                        className={`absolute border-4 border-white shadow-lg flex items-center justify-center text-white font-bold transition-all hover:scale-105 hover:shadow-2xl cursor-pointer group ${
+                          available
+                            ? 'bg-green-500/70 hover:bg-green-600/80 border-green-300'
+                            : 'bg-red-500/70 hover:bg-red-600/80 border-red-300'
+                        } ${hasArea ? 'rounded-lg' : 'rounded-full w-10 h-10 transform -translate-x-1/2 -translate-y-1/2'}`}
+                        style={hasArea ? {
+                          left: `${room.positionX}%`,
+                          top: `${room.positionY}%`,
+                          width: `${room.areaWidth}%`,
+                          height: `${room.areaHeight}%`,
+                        } : {
+                          left: `${room.positionX}%`,
+                          top: `${room.positionY}%`,
+                        }}
+                        title={room.name}
+                      >
+                        {hasArea ? (
+                          <div className="text-center p-2">
+                            <div className="font-bold text-sm sm:text-base drop-shadow-lg">{room.name}</div>
+                            <div className="text-xs sm:text-sm opacity-90 drop-shadow-lg">
+                              {available ? '✓ Beschikbaar' : '✕ Bezet'}
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <span>{available ? '✓' : '✕'}</span>
-                      )}
-                    </button>
-                  );
-                })}
+                        ) : (
+                          <span>{available ? '✓' : '✕'}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+              </div>
             </div>
           </div>
         )}
