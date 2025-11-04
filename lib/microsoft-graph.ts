@@ -268,9 +268,9 @@ export async function getMicrosoftRooms(): Promise<RoomResource[]> {
           displayName: room.displayName,
           emailAddress: room.mail,
           capacity: room.mailboxSettings?.capacity || 0,
-          building: null,
-          floorLabel: null,
-          phone: null,
+          building: undefined,
+          floorLabel: undefined,
+          phone: undefined,
         }));
       } catch (altError: any) {
         console.error('❌ Alternative approach also failed:', {
