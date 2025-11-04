@@ -194,27 +194,37 @@ export async function getMicrosoftRooms(): Promise<RoomResource[]> {
       });
       
       try {
-        // Try to get rooms directly via findRooms
-        console.log('Calling Graph API: GET /users (filter: Resource type)');
+        // Try to get rooms directly - get all users and filter for resources
+        console.log('Calling Graph API: GET /users (no filter, will filter client-side)');
+        
+        // Get all users without filter - then filter client-side
         const response = await client
           .api('/users')
-          .filter("userType eq 'Resource'")
-          .select('id,displayName,mail,mailboxSettings,resourceProvisioningOptions,resourceType')
+          .select('id,displayName,mail,mailboxSettings,resourceProvisioningOptions')
+          .top(999)
           .get();
 
-        console.log(`✅ Found ${response.value?.length || 0} resource accounts`);
+        console.log(`✅ Found ${response.value?.length || 0} users/resources total`);
 
-        // Filter for rooms - check various properties
+        // Filter for room resources - look for accounts with mail that are resources
         const rooms = response.value.filter((user: any) => {
-          // Check if it has Room in resourceProvisioningOptions
+          // Must have a mail address
+          if (!user.mail) return false;
+          
+          // Look for room indicators:
+          // 1. Has Room in resourceProvisioningOptions
           const hasRoomOption = user.resourceProvisioningOptions?.includes('Room');
-          // Check if displayName doesn't contain certain keywords (like "Equipment")
-          const isRoom = !user.displayName?.toLowerCase().includes('equipment');
-          // Log for debugging
-          if (hasRoomOption || (isRoom && user.mail)) {
-            console.log(`Found room: ${user.displayName} (${user.mail})`);
+          
+          // 2. Mail address looks like a room (typical pattern: room@domain.be)
+          // 3. displayName doesn't contain "Equipment" or other non-room keywords
+          const isNotEquipment = !user.displayName?.toLowerCase().includes('equipment');
+          
+          // Log each room found
+          if (hasRoomOption || isNotEquipment) {
+            console.log(`Found resource: ${user.displayName} (${user.mail}) - Room: ${hasRoomOption}`);
           }
-          return hasRoomOption || (isRoom && user.mail);
+          
+          return (hasRoomOption || isNotEquipment) && user.mail;
         });
 
         console.log(`✅ Filtered to ${rooms.length} room resources`);
