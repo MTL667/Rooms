@@ -81,6 +81,16 @@ export default function AdminPage() {
           </button>
 
           <button
+            onClick={() => router.push('/admin/microsoft-sync')}
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg shadow-xl p-6 text-left transition-all hover:scale-105 border-2 border-white/20"
+          >
+            <div className="text-2xl font-semibold mb-2">☁️ Microsoft Sync</div>
+            <p className="text-blue-100 text-sm">
+              Synchroniseer rooms met Microsoft Entra
+            </p>
+          </button>
+
+          <button
             onClick={() => router.push('/admin/branding')}
             className="bg-pink-600 hover:bg-pink-700 text-white rounded-lg shadow p-6 text-left transition-colors"
           >
