@@ -580,12 +580,6 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            <button
-              onClick={() => router.push('/floor-plan')}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all text-sm whitespace-nowrap"
-            >
-              🗺️ {t('floorPlan')}
-            </button>
             {session?.user?.role === 'ADMIN' && (
               <button
                 onClick={() => router.push('/admin')}
@@ -594,6 +588,12 @@ export default function DashboardPage() {
                 👨‍💼 Admin
               </button>
             )}
+            <button
+              onClick={() => router.push('/floor-plan')}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all text-sm whitespace-nowrap"
+            >
+              🗺️ {t('floorPlan')}
+            </button>
             <button
               onClick={() => router.push('/my-bookings')}
               className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all text-sm whitespace-nowrap"

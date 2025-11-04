@@ -73,6 +73,7 @@ export default function FloorPlansManagement() {
         setUploading(true);
         const uploadFormData = new FormData();
         uploadFormData.append('file', selectedFile);
+        uploadFormData.append('type', 'floorplans');
 
         const uploadRes = await fetch('/api/upload', {
           method: 'POST',
