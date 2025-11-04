@@ -175,6 +175,13 @@ export async function getMicrosoftRooms(): Promise<RoomResource[]> {
       }
 
       console.log(`Total rooms fetched: ${allRooms.length}`);
+      
+      // If Places API found no rooms, try fallback approach
+      if (allRooms.length === 0) {
+        console.log('⚠️ Places API found 0 rooms, trying fallback User.Read.All approach...');
+        throw new Error('No room lists found in Places API, using fallback');
+      }
+      
       return allRooms;
     } catch (placesError: any) {
       // If Places API fails, try alternative approach using findRooms
