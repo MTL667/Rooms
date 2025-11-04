@@ -360,14 +360,37 @@ export async function createRoomBooking(
     console.log(`Organizer: ${organizerEmail}`);
     console.log(`Time: ${startTime.toISOString()} - ${endTime.toISOString()}`);
 
-    // Create event on the organizer's calendar
-    // This will automatically send invitations to the room resource
+    // Create event on the organizer's calendar with send notifications
+    // This will trigger Microsoft to send meeting invitations to attendees
     const createdEvent = await client
       .api(`/users/${organizerEmail}/calendar/events`)
       .post(event);
 
     console.log(`✅ Calendar event created: ${createdEvent.id}`);
-    console.log(`Event will appear in organizer's calendar and room will receive invitation`);
+
+    // Also create the event in the room's calendar so it shows up in their availability
+    // This helps with double-booking prevention
+    try {
+      console.log(`Adding event to room calendar: ${roomEmail}`);
+      await client
+        .api(`/users/${roomEmail}/calendar/events`)
+        .post({
+          ...event,
+          attendees: [
+            {
+              emailAddress: {
+                address: organizerEmail,
+                name: organizerEmail,
+              },
+              type: 'required',
+            },
+          ],
+        });
+      console.log(`✅ Event added to room calendar`);
+    } catch (roomCalendarError: any) {
+      console.log(`⚠️ Could not add to room calendar (this is okay):`, roomCalendarError.message);
+      // This is optional - the invitation will still work if organizer's event is created
+    }
 
     return {
       id: createdEvent.id,
