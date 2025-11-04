@@ -197,22 +197,12 @@ function FloorPlanContent() {
             </div>
             <h1 className="text-2xl font-bold">Plattegrond Overzicht</h1>
           </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
-              >
-                📊 Tabel View
-              </button>
-              {session?.user?.role === 'ADMIN' && (
-                <button
-                  onClick={() => router.push('/admin')}
-                  className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
-                >
-                  👨‍💼 Admin
-                </button>
-              )}
-            </div>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
+          >
+            📊 Dashboard
+          </button>
         </div>
       </div>
 

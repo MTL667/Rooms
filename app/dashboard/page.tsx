@@ -639,12 +639,6 @@ export default function DashboardPage() {
               </button>
             )}
             <button
-              onClick={() => router.push('/floor-plan')}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all text-sm whitespace-nowrap"
-            >
-              🗺️ {t('floorPlan')}
-            </button>
-            <button
               onClick={() => router.push('/my-bookings')}
               className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all text-sm whitespace-nowrap"
             >
