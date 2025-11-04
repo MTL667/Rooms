@@ -704,7 +704,7 @@ export default function DashboardPage() {
                 <div
                   key={floorPlan.id}
                   className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl shadow-lg border-2 border-teal-200 overflow-hidden hover:shadow-2xl transition-all cursor-pointer"
-                  onClick={() => router.push('/floor-plan')}
+                  onClick={() => router.push(`/floor-plan?id=${floorPlan.id}`)}
                 >
                   <div className="bg-gradient-to-r from-teal-500 to-cyan-500 p-4">
                     <h4 className="text-xl font-bold text-white">{floorPlan.name}</h4>

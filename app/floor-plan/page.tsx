@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Booking {
   id: string;
@@ -35,6 +35,7 @@ interface FloorPlan {
 export default function FloorPlanView() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([]);
   const [selectedFloorPlan, setSelectedFloorPlan] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
@@ -60,7 +61,7 @@ export default function FloorPlanView() {
     if (session) {
       loadFloorPlans();
     }
-  }, [session]);
+  }, [session, searchParams]);
 
   const loadFloorPlans = async () => {
     try {
@@ -69,8 +70,18 @@ export default function FloorPlanView() {
       const plans = data.floorPlans || [];
       console.log('Loaded floor plans:', plans.length, plans);
       setFloorPlans(plans);
-      if (plans.length > 0 && !selectedFloorPlan) {
-        setSelectedFloorPlan(plans[0].id);
+      
+      // Check if there's an ID in the URL
+      const urlFloorPlanId = searchParams.get('id');
+      
+      if (plans.length > 0) {
+        if (urlFloorPlanId && plans.some(p => p.id === urlFloorPlanId)) {
+          // Select the floor plan from URL
+          setSelectedFloorPlan(urlFloorPlanId);
+        } else if (!selectedFloorPlan) {
+          // Default to first floor plan
+          setSelectedFloorPlan(plans[0].id);
+        }
       }
     } catch (error) {
       console.error('Error loading floor plans:', error);
@@ -211,7 +222,10 @@ export default function FloorPlanView() {
           {floorPlans.map((fp) => (
             <button
               key={fp.id}
-              onClick={() => setSelectedFloorPlan(fp.id)}
+              onClick={() => {
+                setSelectedFloorPlan(fp.id);
+                router.push(`/floor-plan?id=${fp.id}`);
+              }}
               className={`px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105 border ${
                 selectedFloorPlan === fp.id
                   ? 'bg-gradient-to-r from-teal-400/80 to-cyan-400/80 backdrop-blur-md text-white border-white/40'
