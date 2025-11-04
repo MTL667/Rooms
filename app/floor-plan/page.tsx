@@ -18,6 +18,8 @@ interface Room {
   capacity: number;
   positionX: number | null;
   positionY: number | null;
+  areaWidth: number | null;
+  areaHeight: number | null;
   bookings: Booking[];
 }
 
@@ -252,27 +254,43 @@ export default function FloorPlanView() {
                 className="w-full"
               />
               
-              {/* Room Markers */}
+              {/* Room Areas */}
               {currentFloorPlan.rooms
                 .filter((room) => room.positionX !== null && room.positionY !== null)
                 .map((room) => {
                   const available = isRoomAvailable(room);
+                  const hasArea = room.areaWidth !== null && room.areaHeight !== null && room.areaWidth > 0 && room.areaHeight > 0;
+                  
                   return (
                     <button
                       key={room.id}
                       onClick={() => setSelectedRoom(room)}
-                      className={`absolute w-10 h-10 rounded-full border-4 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-white font-bold transition-all hover:scale-125 cursor-pointer ${
+                      className={`absolute border-4 border-white shadow-lg flex items-center justify-center text-white font-bold transition-all hover:scale-105 hover:shadow-2xl cursor-pointer group ${
                         available
-                          ? 'bg-green-500 hover:bg-green-600'
-                          : 'bg-red-500 hover:bg-red-600'
-                      }`}
-                      style={{
+                          ? 'bg-green-500/70 hover:bg-green-600/80 border-green-300'
+                          : 'bg-red-500/70 hover:bg-red-600/80 border-red-300'
+                      } ${hasArea ? 'rounded-lg' : 'rounded-full w-10 h-10 transform -translate-x-1/2 -translate-y-1/2'}`}
+                      style={hasArea ? {
+                        left: `${room.positionX}%`,
+                        top: `${room.positionY}%`,
+                        width: `${room.areaWidth}%`,
+                        height: `${room.areaHeight}%`,
+                      } : {
                         left: `${room.positionX}%`,
                         top: `${room.positionY}%`,
                       }}
                       title={room.name}
                     >
-                      {available ? '✓' : '✕'}
+                      {hasArea ? (
+                        <div className="text-center p-2">
+                          <div className="font-bold text-sm sm:text-base drop-shadow-lg">{room.name}</div>
+                          <div className="text-xs sm:text-sm opacity-90 drop-shadow-lg">
+                            {available ? '✓ Beschikbaar' : '✕ Bezet'}
+                          </div>
+                        </div>
+                      ) : (
+                        <span>{available ? '✓' : '✕'}</span>
+                      )}
                     </button>
                   );
                 })}

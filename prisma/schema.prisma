@@ -83,6 +83,8 @@ model Room {
   floorPlan       FloorPlan? @relation(fields: [floorPlanId], references: [id])
   positionX       Float?
   positionY       Float?
+  areaWidth       Float?
+  areaHeight      Float?
   bookings        Booking[]
 }
 

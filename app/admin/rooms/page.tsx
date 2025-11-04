@@ -22,6 +22,8 @@ interface Room {
   floorPlanId: string | null;
   positionX: number | null;
   positionY: number | null;
+  areaWidth: number | null;
+  areaHeight: number | null;
   _count: { bookings: number };
 }
 
@@ -42,8 +44,12 @@ export default function RoomsManagement() {
     floorPlanId: '',
     positionX: null as number | null,
     positionY: null as number | null,
+    areaWidth: null as number | null,
+    areaHeight: null as number | null,
   });
   const [showPositionPicker, setShowPositionPicker] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{x: number, y: number} | null>(null);
 
   useEffect(() => {
     if (session?.user?.role !== 'ADMIN') {
@@ -93,13 +99,15 @@ export default function RoomsManagement() {
           floorPlanId: formData.floorPlanId || null,
           positionX: formData.positionX,
           positionY: formData.positionY,
+          areaWidth: formData.areaWidth,
+          areaHeight: formData.areaHeight,
         }),
       });
       loadRooms();
       setShowForm(false);
       setEditingRoom(null);
       setShowPositionPicker(false);
-      setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null });
+      setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null, areaWidth: null, areaHeight: null });
     } catch (error) {
       console.error('Error saving room:', error);
     }
@@ -116,6 +124,8 @@ export default function RoomsManagement() {
       floorPlanId: room.floorPlanId || '',
       positionX: room.positionX,
       positionY: room.positionY,
+      areaWidth: room.areaWidth,
+      areaHeight: room.areaHeight,
     });
     setShowForm(true);
   };
@@ -143,7 +153,7 @@ export default function RoomsManagement() {
                 setShowForm(!showForm);
                 if (showForm) {
                   setEditingRoom(null);
-                  setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null });
+                  setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null, areaWidth: null, areaHeight: null });
                 }
               }}
               className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-teal-300/30 text-white px-4 py-2 rounded-xl font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
@@ -226,19 +236,20 @@ export default function RoomsManagement() {
               {formData.floorPlanId && (
                 <div className="border-2 border-teal-300 rounded-lg p-4 bg-teal-50">
                   <label className="block text-sm font-semibold mb-2 text-gray-900">
-                    📍 Positie op Plattegrond
+                    📍 Gebied op Plattegrond
                   </label>
-                  {formData.positionX !== null && formData.positionY !== null ? (
+                  {formData.positionX !== null && formData.positionY !== null && formData.areaWidth !== null && formData.areaHeight !== null && formData.areaWidth > 0 ? (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-700">
-                        X: {formData.positionX.toFixed(1)}%, Y: {formData.positionY.toFixed(1)}%
+                        X: {formData.positionX.toFixed(1)}%, Y: {formData.positionY.toFixed(1)}%<br/>
+                        Breedte: {formData.areaWidth.toFixed(1)}%, Hoogte: {formData.areaHeight.toFixed(1)}%
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowPositionPicker(true)}
                         className="bg-teal-400/80 hover:bg-teal-500/90 backdrop-blur-md border border-teal-300/30 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
                       >
-                        🎯 Wijzig Positie
+                        🎯 Wijzig Gebied
                       </button>
                     </div>
                   ) : (
@@ -247,7 +258,7 @@ export default function RoomsManagement() {
                       onClick={() => setShowPositionPicker(true)}
                       className="w-full bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white px-4 py-2 rounded-xl font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
                     >
-                      🎯 Klik om Positie te Selecteren
+                      🎯 Teken Kamer Gebied
                     </button>
                   )}
                 </div>
@@ -274,7 +285,7 @@ export default function RoomsManagement() {
                   onClick={() => {
                     setShowForm(false);
                     setEditingRoom(null);
-                    setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null });
+                    setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null, areaWidth: null, areaHeight: null });
                   }}
                   className="bg-gray-600/60 hover:bg-gray-700/70 backdrop-blur-md border border-gray-400/30 text-white px-6 py-2 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
                 >
@@ -331,60 +342,95 @@ export default function RoomsManagement() {
         </div>
       </div>
 
-      {/* Position Picker Modal */}
+      {/* Rectangle Area Picker Modal */}
       {showPositionPicker && formData.floorPlanId && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-6">
           <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">🎯 Selecteer Kamer Positie</h2>
+                <h2 className="text-2xl font-bold text-gray-900">🎯 Teken Kamer Gebied</h2>
                 <button
-                  onClick={() => setShowPositionPicker(false)}
+                  onClick={() => {
+                    setShowPositionPicker(false);
+                    setIsDragging(false);
+                    setDragStart(null);
+                  }}
                   className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
                 >
                   ✕
                 </button>
               </div>
               <p className="text-sm text-gray-600 mb-4">
-                Klik op de plattegrond waar de kamer zich bevindt
+                Sleep over de plattegrond om een rechthoek te tekenen rond de kamer
               </p>
               <div className="border-4 border-teal-500 rounded-lg overflow-hidden relative">
                 <img
                   src={floorPlans.find(fp => fp.id === formData.floorPlanId)?.imageUrl}
                   alt="Floor plan"
-                  className="w-full cursor-crosshair"
-                  onClick={(e) => {
+                  className="w-full select-none"
+                  style={{ cursor: isDragging ? 'crosshair' : 'crosshair' }}
+                  onMouseDown={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
                     const x = ((e.clientX - rect.left) / rect.width) * 100;
                     const y = ((e.clientY - rect.top) / rect.height) * 100;
-                    setFormData({ ...formData, positionX: x, positionY: y });
+                    setIsDragging(true);
+                    setDragStart({ x, y });
+                    setFormData({ ...formData, positionX: x, positionY: y, areaWidth: 0, areaHeight: 0 });
                   }}
+                  onMouseMove={(e) => {
+                    if (!isDragging || !dragStart) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const currentX = ((e.clientX - rect.left) / rect.width) * 100;
+                    const currentY = ((e.clientY - rect.top) / rect.height) * 100;
+                    
+                    const width = Math.abs(currentX - dragStart.x);
+                    const height = Math.abs(currentY - dragStart.y);
+                    const startX = Math.min(dragStart.x, currentX);
+                    const startY = Math.min(dragStart.y, currentY);
+                    
+                    setFormData({ ...formData, positionX: startX, positionY: startY, areaWidth: width, areaHeight: height });
+                  }}
+                  onMouseUp={() => {
+                    setIsDragging(false);
+                  }}
+                  onMouseLeave={() => {
+                    setIsDragging(false);
+                  }}
+                  draggable={false}
                 />
-                {formData.positionX !== null && formData.positionY !== null && (
+                {formData.positionX !== null && formData.positionY !== null && formData.areaWidth !== null && formData.areaHeight !== null && formData.areaWidth > 0 && formData.areaHeight > 0 && (
                   <div
-                    className="absolute w-8 h-8 bg-red-500 border-4 border-white rounded-full shadow-lg transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-white font-bold"
+                    className="absolute border-4 border-teal-500 bg-teal-500/30 rounded-lg shadow-lg pointer-events-none"
                     style={{
                       left: `${formData.positionX}%`,
                       top: `${formData.positionY}%`,
+                      width: `${formData.areaWidth}%`,
+                      height: `${formData.areaHeight}%`,
                     }}
                   >
-                    📍
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold bg-teal-600 px-2 py-1 rounded text-xs">
+                      {formData.name || 'Kamer'}
+                    </div>
                   </div>
                 )}
               </div>
               <div className="mt-4 flex justify-between items-center">
                 <div className="text-sm text-gray-600">
-                  {formData.positionX !== null && formData.positionY !== null ? (
+                  {formData.positionX !== null && formData.positionY !== null && formData.areaWidth !== null && formData.areaHeight !== null && formData.areaWidth > 0 ? (
                     <span className="font-semibold">
-                      Positie: X: {formData.positionX.toFixed(1)}%, Y: {formData.positionY.toFixed(1)}%
+                      Gebied: X: {formData.positionX.toFixed(1)}%, Y: {formData.positionY.toFixed(1)}%, B: {formData.areaWidth.toFixed(1)}%, H: {formData.areaHeight.toFixed(1)}%
                     </span>
                   ) : (
-                    <span>Klik op de plattegrond om een positie te selecteren</span>
+                    <span>Sleep over de plattegrond om een gebied te selecteren</span>
                   )}
                 </div>
                 <button
-                  onClick={() => setShowPositionPicker(false)}
-                  disabled={formData.positionX === null || formData.positionY === null}
+                  onClick={() => {
+                    setShowPositionPicker(false);
+                    setIsDragging(false);
+                    setDragStart(null);
+                  }}
+                  disabled={formData.positionX === null || formData.positionY === null || formData.areaWidth === null || formData.areaHeight === null || formData.areaWidth === 0}
                   className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 disabled:from-gray-400/60 disabled:to-gray-500/60 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 text-white px-6 py-2 rounded-xl font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
                 >
                   ✅ Bevestigen

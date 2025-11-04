@@ -32,6 +32,8 @@ export async function POST(req: Request) {
         floorPlanId: data.floorPlanId || null,
         positionX: data.positionX ?? null,
         positionY: data.positionY ?? null,
+        areaWidth: data.areaWidth ?? null,
+        areaHeight: data.areaHeight ?? null,
       },
     });
     return NextResponse.json({ room });
