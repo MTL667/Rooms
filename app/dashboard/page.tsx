@@ -714,12 +714,12 @@ export default function DashboardPage() {
                     )}
                   </div>
                   
-                  <div className="relative bg-white max-h-64 flex items-center justify-center">
-                    <div className="relative w-full">
+                  <div className="relative bg-white flex items-center justify-center min-h-[16rem]">
+                    <div className="relative inline-block max-w-full">
                       <img
                         src={floorPlan.imageUrl}
                         alt={floorPlan.name}
-                        className="w-full h-auto max-h-64 object-contain mx-auto"
+                        className="max-h-64 w-auto max-w-full block"
                       />
                       
                       {/* Room Overlays */}
