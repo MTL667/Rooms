@@ -174,91 +174,56 @@ export async function getMicrosoftRooms(): Promise<RoomResource[]> {
         }
       }
 
-      console.log(`Total rooms fetched: ${allRooms.length}`);
+      console.log(`Total rooms from lists: ${allRooms.length}`);
       
-      // If Places API found no rooms, try fallback approach
+      // If no rooms from lists, try direct /places/microsoft.graph.room endpoint
       if (allRooms.length === 0) {
-        console.log('⚠️ Places API found 0 rooms, trying fallback User.Read.All approach...');
-        throw new Error('No room lists found in Places API, using fallback');
+        console.log('⚠️ No rooms found in lists, trying /places/microsoft.graph.room endpoint...');
+        try {
+          const directRooms = await client
+            .api('/places/microsoft.graph.room')
+            .get();
+
+          console.log(`✅ Found ${directRooms.value?.length || 0} rooms via direct room endpoint`);
+
+          for (const room of directRooms.value || []) {
+            allRooms.push({
+              id: room.id,
+              displayName: room.displayName,
+              emailAddress: room.emailAddress,
+              capacity: room.capacity,
+              building: room.building,
+              floorLabel: room.floorLabel,
+              phone: room.phone,
+            });
+          }
+        } catch (directError: any) {
+          console.error('Direct room endpoint also failed:', directError.message);
+          throw new Error(`Failed to fetch rooms from Microsoft Graph.\n\nTried:\n1. /places/microsoft.graph.roomlist\n2. /places/microsoft.graph.room\n\nBoth failed. Please ensure Place.Read.All permission is granted.`);
+        }
       }
       
       return allRooms;
     } catch (placesError: any) {
-      // If Places API fails, try alternative approach using findRooms
-      console.log('❌ Places API failed, trying alternative approach...');
+      // If Places API fails, log error and throw
+      console.log('❌ Places API failed');
       console.error('Places API error details:', {
         message: placesError.message,
         statusCode: placesError.statusCode,
         code: placesError.code,
-        body: placesError.body,
       });
       
-      try {
-        // Try to get rooms directly - fetch all users
-        console.log('Calling Graph API: GET /users');
-        
-        const response = await client
-          .api('/users')
-          .select('id,displayName,mail,mailboxSettings,resourceProvisioningOptions')
-          .get();
-
-        console.log(`✅ Found ${response.value?.length || 0} users/resources`);
-
-        // Filter for room resources - look for accounts with mail that are resources
-        const rooms = response.value.filter((user: any) => {
-          // Must have a mail address
-          if (!user.mail) return false;
-          
-          // Look for room indicators:
-          // 1. Has Room in resourceProvisioningOptions
-          const hasRoomOption = user.resourceProvisioningOptions?.includes('Room');
-          
-          // 2. DisplayName doesn't contain "Equipment" or other non-room keywords
-          const isNotEquipment = !user.displayName?.toLowerCase().includes('equipment');
-          
-          // Log each room found
-          if (hasRoomOption || isNotEquipment) {
-            console.log(`Found resource: ${user.displayName} (${user.mail}) - Room: ${hasRoomOption}`);
-          }
-          
-          return (hasRoomOption || isNotEquipment) && user.mail;
-        });
-
-        console.log(`✅ Filtered to ${rooms.length} room resources`);
-
-        return rooms.map((room: any) => ({
-          id: room.id,
-          displayName: room.displayName,
-          emailAddress: room.mail,
-          capacity: room.mailboxSettings?.capacity || 0,
-          building: undefined,
-          floorLabel: undefined,
-          phone: undefined,
-        }));
-      } catch (altError: any) {
-        console.error('❌ Alternative approach also failed:', {
-          message: altError.message,
-          statusCode: altError.statusCode,
-          code: altError.code,
-          body: altError.body,
-        });
-        
-        const errorMsg = altError.message || 'Unknown error';
-        const errorCode = altError.statusCode || altError.code || 'N/A';
-        
-        throw new Error(
-          `Failed to fetch rooms from Microsoft Graph.\n\n` +
-          `Error Code: ${errorCode}\n` +
-          `Error: ${errorMsg}\n\n` +
-          `Required Permissions:\n` +
-          `- Place.Read.All (Application)\n` +
-          `- User.Read.All (Application)\n\n` +
-          `Please verify:\n` +
-          `1. Permissions are added as "Application" (not Delegated)\n` +
-          `2. Admin consent is granted\n` +
-          `3. Wait 5-10 minutes after granting consent for changes to propagate`
-        );
-      }
+      throw new Error(
+        `Failed to fetch rooms from Microsoft Graph.\n\n` +
+        `Error Code: ${placesError.statusCode || placesError.code || 'Unknown'}\n` +
+        `Error: ${placesError.message || 'Unknown error'}\n\n` +
+        `Required Permissions:\n` +
+        `- Place.Read.All (Application)\n\n` +
+        `Please verify:\n` +
+        `1. Place.Read.All permission is added as "Application"\n` +
+        `2. Admin consent is granted\n` +
+        `3. Wait 5-10 minutes after granting consent`
+      );
     }
   } catch (error: any) {
     console.error('Error getting Microsoft rooms:', error);
