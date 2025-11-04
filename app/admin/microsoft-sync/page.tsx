@@ -39,12 +39,16 @@ export default function MicrosoftSyncPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Sync failed');
+        const errorMessage = data.error || 'Sync failed';
+        const errorDetails = data.details ? `\n\nDetails: ${data.details}` : '';
+        throw new Error(errorMessage + errorDetails);
       }
 
       setSyncResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Sync error:', err);
+      setError(errorMessage);
     } finally {
       setSyncing(false);
     }
@@ -133,9 +137,31 @@ export default function MicrosoftSyncPage() {
           <div className="bg-red-50 border-2 border-red-300 rounded-xl p-6 mb-6">
             <div className="flex items-start gap-3">
               <span className="text-2xl">❌</span>
-              <div>
+              <div className="flex-1">
                 <h3 className="font-bold text-red-900 mb-2">Sync Error</h3>
-                <p className="text-red-700">{error}</p>
+                <p className="text-red-700 whitespace-pre-wrap font-mono text-sm">{error}</p>
+                
+                <div className="mt-4 bg-white border-2 border-red-200 rounded-lg p-4">
+                  <h4 className="font-bold text-gray-900 mb-2 text-sm">🔧 Mogelijke oplossingen:</h4>
+                  <ul className="text-sm text-gray-700 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span>1️⃣</span>
+                      <span>Controleer of de Azure AD app de juiste permissions heeft (zie hieronder)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>2️⃣</span>
+                      <span>Zorg dat "Grant admin consent" is gegeven voor alle permissions</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>3️⃣</span>
+                      <span>Controleer of AZURE_CLIENT_ID, AZURE_CLIENT_SECRET en AZURE_TENANT_ID correct zijn ingesteld</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>4️⃣</span>
+                      <span>Kijk in de console logs (F12 → Console) voor meer details</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -194,6 +220,48 @@ export default function MicrosoftSyncPage() {
             </div>
           </div>
         )}
+
+        {/* Permissions Required */}
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-lg p-6 border-2 border-amber-200 mb-6">
+          <h3 className="font-bold text-lg text-gray-900 mb-3">🔐 Azure AD Permissions Vereist</h3>
+          <p className="text-gray-700 mb-3 text-sm">
+            Als de sync faalt, controleer of je Azure AD app registratie de volgende permissions heeft:
+          </p>
+          <div className="bg-white rounded-lg p-4 border-2 border-amber-300">
+            <h4 className="font-bold text-gray-900 mb-2">Microsoft Graph API Permissions:</h4>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-start gap-2">
+                <span className="text-teal-500 font-bold">✓</span>
+                <div>
+                  <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">Place.Read.All</code>
+                  <span className="text-gray-600 ml-2">(Application) - Voor rooms ophalen</span>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-teal-500 font-bold">✓</span>
+                <div>
+                  <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">Calendars.ReadWrite</code>
+                  <span className="text-gray-600 ml-2">(Application) - Voor calendar events</span>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-teal-500 font-bold">✓</span>
+                <div>
+                  <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">User.Read.All</code>
+                  <span className="text-gray-600 ml-2">(Application) - Alternatief voor rooms</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div className="mt-3 bg-blue-50 border-2 border-blue-200 rounded-lg p-3">
+            <p className="text-xs text-gray-700">
+              💡 <strong>Tip:</strong> Ga naar Azure Portal → App registrations → Je app → API permissions → Add permission → Microsoft Graph → Application permissions
+            </p>
+            <p className="text-xs text-gray-700 mt-1">
+              ⚠️ <strong>Belangrijk:</strong> Na toevoegen van permissions moet een admin "Grant admin consent" geven!
+            </p>
+          </div>
+        </div>
 
         {/* Instructions */}
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg p-6 border-2 border-gray-200">

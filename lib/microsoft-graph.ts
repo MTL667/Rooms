@@ -114,40 +114,79 @@ export async function getMicrosoftRooms(): Promise<RoomResource[]> {
   try {
     const client = createGraphClient();
     
-    // Get all room lists
-    const roomLists = await client
-      .api('/places/microsoft.graph.roomlist')
-      .get();
+    console.log('Attempting to fetch room lists from Microsoft Graph...');
+    
+    try {
+      // Try to get all room lists
+      const roomLists = await client
+        .api('/places/microsoft.graph.roomlist')
+        .get();
 
-    const allRooms: RoomResource[] = [];
+      console.log(`Found ${roomLists.value?.length || 0} room lists`);
 
-    // Get rooms from each room list
-    for (const roomList of roomLists.value || []) {
+      const allRooms: RoomResource[] = [];
+
+      // Get rooms from each room list
+      for (const roomList of roomLists.value || []) {
+        try {
+          console.log(`Fetching rooms from list: ${roomList.displayName}`);
+          const rooms = await client
+            .api(`/places/${roomList.id}/microsoft.graph.roomlist/rooms`)
+            .get();
+
+          console.log(`Found ${rooms.value?.length || 0} rooms in ${roomList.displayName}`);
+
+          for (const room of rooms.value || []) {
+            allRooms.push({
+              id: room.id,
+              displayName: room.displayName,
+              emailAddress: room.emailAddress,
+              capacity: room.capacity,
+              building: room.building,
+              floorLabel: room.floorLabel,
+              phone: room.phone,
+            });
+          }
+        } catch (error: any) {
+          console.error(`Error getting rooms from list ${roomList.displayName}:`, error);
+          console.error('Error details:', error.message, error.statusCode);
+        }
+      }
+
+      console.log(`Total rooms fetched: ${allRooms.length}`);
+      return allRooms;
+    } catch (placesError: any) {
+      // If Places API fails, try alternative approach using findRooms
+      console.log('Places API failed, trying alternative approach...');
+      console.error('Places API error:', placesError.message, placesError.statusCode);
+      
       try {
-        const rooms = await client
-          .api(`/places/${roomList.id}/microsoft.graph.roomlist/rooms`)
+        // Try to get rooms directly via findRooms
+        const response = await client
+          .api('/users')
+          .filter("userType eq 'Resource' and resourceProvisioningOptions/Any(x:x eq 'Room')")
+          .select('id,displayName,mail,mailboxSettings')
           .get();
 
-        for (const room of rooms.value || []) {
-          allRooms.push({
-            id: room.id,
-            displayName: room.displayName,
-            emailAddress: room.emailAddress,
-            capacity: room.capacity,
-            building: room.building,
-            floorLabel: room.floorLabel,
-            phone: room.phone,
-          });
-        }
-      } catch (error) {
-        console.error(`Error getting rooms from list ${roomList.displayName}:`, error);
+        console.log(`Found ${response.value?.length || 0} rooms via users API`);
+
+        return response.value.map((room: any) => ({
+          id: room.id,
+          displayName: room.displayName,
+          emailAddress: room.mail,
+          capacity: room.mailboxSettings?.capacity || 0,
+          building: null,
+          floorLabel: null,
+          phone: null,
+        }));
+      } catch (altError: any) {
+        console.error('Alternative approach also failed:', altError.message, altError.statusCode);
+        throw new Error(`Failed to fetch rooms from Microsoft Graph. Please ensure the app has the required permissions (Place.Read.All or Calendars.Read). Error: ${altError.message}`);
       }
     }
-
-    return allRooms;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting Microsoft rooms:', error);
-    throw error;
+    throw new Error(`Microsoft Graph API error: ${error.message || 'Unknown error'}. Please check Azure AD app permissions.`);
   }
 }
 
