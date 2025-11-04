@@ -203,6 +203,36 @@ export async function getMicrosoftRooms(): Promise<RoomResource[]> {
         }
       }
       
+      // Additional: Try /places endpoint without type filter to catch all mailbox types
+      if (allRooms.length < 10) {
+        console.log('⚠️ Found fewer than 10 rooms, trying generic /places endpoint...');
+        try {
+          const allPlaces = await client
+            .api('/places')
+            .get();
+
+          console.log(`✅ Found ${allPlaces.value?.length || 0} total places`);
+
+          // Filter for room-like resources (those with emailAddress)
+          for (const place of allPlaces.value || []) {
+            if (place.emailAddress && !allRooms.find(r => r.emailAddress === place.emailAddress)) {
+              allRooms.push({
+                id: place.id,
+                displayName: place.displayName,
+                emailAddress: place.emailAddress,
+                capacity: place.capacity,
+                building: place.building,
+                floorLabel: place.floorLabel,
+                phone: place.phone,
+              });
+            }
+          }
+          console.log(`✅ Total rooms after places check: ${allRooms.length}`);
+        } catch (placesError: any) {
+          console.log('⚠️ Generic /places endpoint not available or failed');
+        }
+      }
+      
       return allRooms;
     } catch (placesError: any) {
       // If Places API fails, log error and throw
