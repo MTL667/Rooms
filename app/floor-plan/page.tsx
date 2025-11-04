@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+
+// Force dynamic rendering to avoid build-time errors with useSearchParams
+export const dynamic = 'force-dynamic';
 
 interface Booking {
   id: string;
