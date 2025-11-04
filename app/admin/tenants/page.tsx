@@ -10,6 +10,7 @@ interface Tenant {
   id: string;
   tenantId: string;
   name: string | null;
+  domain: string | null;
   active: boolean;
   status: TenantStatus;
   createdAt: string;
@@ -21,7 +22,7 @@ export default function TenantsManagement() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ tenantId: '', name: '', active: true, status: 'APPROVED' as TenantStatus });
+  const [formData, setFormData] = useState({ tenantId: '', name: '', domain: '', active: true, status: 'APPROVED' as TenantStatus });
 
   useEffect(() => {
     if (session?.user?.role !== 'ADMIN') {
@@ -53,7 +54,7 @@ export default function TenantsManagement() {
       });
       loadTenants();
       setShowForm(false);
-      setFormData({ tenantId: '', name: '', active: true, status: 'APPROVED' });
+      setFormData({ tenantId: '', name: '', domain: '', active: true, status: 'APPROVED' });
     } catch (error) {
       console.error('Error creating tenant:', error);
     }
@@ -163,6 +164,16 @@ export default function TenantsManagement() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">Domain</label>
+                <input
+                  type="text"
+                  value={formData.domain}
+                  onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                  className="w-full border-2 border-teal-300 rounded-lg px-4 py-2 focus:outline-none focus:border-teal-500 bg-white"
+                  placeholder="bedrijf.com"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-semibold mb-2 text-gray-900">Status *</label>
                 <select
                   value={formData.status}
@@ -208,6 +219,7 @@ export default function TenantsManagement() {
               <tr>
                 <th className="p-4 text-left text-white font-bold">Tenant ID</th>
                 <th className="p-4 text-left text-white font-bold">Name</th>
+                <th className="p-4 text-left text-white font-bold">Domain</th>
                 <th className="p-4 text-left text-white font-bold">Approval Status</th>
                 <th className="p-4 text-left text-white font-bold">Active</th>
                 <th className="p-4 text-left text-white font-bold">Datum</th>
@@ -224,6 +236,15 @@ export default function TenantsManagement() {
                 <tr key={tenant.id} className={`border-t-2 border-teal-100 hover:bg-teal-50/50 transition-colors ${tenant.status === 'PENDING' ? 'bg-amber-50/30' : ''}`}>
                   <td className="p-4 font-mono text-xs text-gray-700">{tenant.tenantId.slice(0, 8)}...</td>
                   <td className="p-4 font-semibold text-gray-900">{tenant.name || 'Unnamed'}</td>
+                  <td className="p-4">
+                    {tenant.domain ? (
+                      <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                        🌐 {tenant.domain}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-sm">-</span>
+                    )}
+                  </td>
                   <td className="p-4">
                     {tenant.status === 'PENDING' && (
                       <span className="px-3 py-1 rounded-full text-sm font-bold bg-amber-100 text-amber-800 border-2 border-amber-300 inline-flex items-center gap-1">

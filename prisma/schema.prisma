@@ -42,6 +42,7 @@ model AllowedTenant {
   updatedAt DateTime     @updatedAt
   tenantId  String       @unique
   name      String?
+  domain    String?
   active    Boolean      @default(true)
   status    TenantStatus @default(PENDING)
 }

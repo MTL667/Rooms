@@ -34,10 +34,14 @@ const authOptions = {
 
             if (!tenant) {
               console.log('Creating new tenant (PENDING approval):', profile.tid);
+              // Extract domain from user email
+              const emailDomain = user.email?.split('@')[1] || null;
+              
               tenant = await prisma.allowedTenant.create({
                 data: {
                   tenantId: profile.tid,
-                  name: profile.tenantName || 'Pending tenant',
+                  name: profile.tenantName || emailDomain || 'Pending tenant',
+                  domain: emailDomain,
                   active: false,
                   status: 'PENDING',
                 },
