@@ -21,6 +21,7 @@ export default function FloorPlansManagement() {
   const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     building: '',
@@ -62,6 +63,27 @@ export default function FloorPlansManagement() {
     }
   };
 
+  const startEdit = (fp: FloorPlan) => {
+    setEditingId(fp.id);
+    setFormData({
+      name: fp.name,
+      building: fp.building || '',
+      floor: fp.floor || '',
+      imageUrl: fp.imageUrl,
+      active: fp.active,
+    });
+    setPreviewUrl(fp.imageUrl);
+    setShowForm(true);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setFormData({ name: '', building: '', floor: '', imageUrl: '', active: true });
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setShowForm(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -94,23 +116,30 @@ export default function FloorPlansManagement() {
         return;
       }
 
-      await fetch('/api/admin/floor-plans', {
-        method: 'POST',
+      const url = editingId 
+        ? `/api/admin/floor-plans/${editingId}`
+        : '/api/admin/floor-plans';
+      
+      const method = editingId ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           imageUrl,
         }),
       });
+
+      if (!res.ok) {
+        throw new Error('Failed to save floor plan');
+      }
       
       loadFloorPlans();
-      setShowForm(false);
-      setFormData({ name: '', building: '', floor: '', imageUrl: '', active: true });
-      setSelectedFile(null);
-      setPreviewUrl(null);
+      cancelEdit();
     } catch (error) {
-      console.error('Error creating floor plan:', error);
-      alert('Fout bij het aanmaken van plattegrond');
+      console.error('Error saving floor plan:', error);
+      alert(`Fout bij het ${editingId ? 'bewerken' : 'aanmaken'} van plattegrond`);
       setUploading(false);
     }
   };
@@ -137,7 +166,7 @@ export default function FloorPlansManagement() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowForm(!showForm)}
+              onClick={() => showForm ? cancelEdit() : setShowForm(true)}
               className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-teal-300/30 text-white px-6 py-2 rounded-xl font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
             >
               {showForm ? '❌ Annuleren' : '➕ Nieuwe Plattegrond'}
@@ -153,7 +182,9 @@ export default function FloorPlansManagement() {
 
         {showForm && (
           <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-6 mb-6 shadow-lg border border-teal-200">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Nieuwe Plattegrond</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              {editingId ? '✏️ Plattegrond Bewerken' : '➕ Nieuwe Plattegrond'}
+            </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -250,7 +281,7 @@ export default function FloorPlansManagement() {
                 disabled={uploading || (!selectedFile && !formData.imageUrl)}
                 className="w-full bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 disabled:from-gray-400/60 disabled:to-gray-500/60 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 text-white font-bold py-3 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:scale-105"
               >
-                {uploading ? '⏳ Uploaden...' : '💾 Opslaan'}
+                {uploading ? '⏳ Uploaden...' : editingId ? '💾 Bijwerken' : '💾 Opslaan'}
               </button>
             </form>
           </div>
@@ -311,12 +342,20 @@ export default function FloorPlansManagement() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => deleteFloorPlan(fp.id)}
-                        className="bg-red-500/60 hover:bg-red-600/70 backdrop-blur-md border border-red-400/30 text-white px-4 py-2 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
-                      >
-                        🗑️ Verwijderen
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => startEdit(fp)}
+                          className="bg-blue-500/60 hover:bg-blue-600/70 backdrop-blur-md border border-blue-400/30 text-white px-4 py-2 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                        >
+                          ✏️ Bewerken
+                        </button>
+                        <button
+                          onClick={() => deleteFloorPlan(fp.id)}
+                          className="bg-red-500/60 hover:bg-red-600/70 backdrop-blur-md border border-red-400/30 text-white px-4 py-2 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                        >
+                          🗑️ Verwijderen
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

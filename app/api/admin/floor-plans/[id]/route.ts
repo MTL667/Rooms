@@ -1,35 +1,76 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+/**
+ * Update a floor plan
+ * PATCH /api/admin/floor-plans/[id]
+ */
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = await params;
-    const data = await req.json();
+    const { id } = params;
+    const body = await req.json();
+    const { name, building, floor, imageUrl, active } = body;
+
+    // Validate required fields
+    if (!name || !imageUrl) {
+      return NextResponse.json(
+        { error: 'Name and image are required' },
+        { status: 400 }
+      );
+    }
+
+    // Update floor plan
     const floorPlan = await prisma.floorPlan.update({
       where: { id },
       data: {
-        name: data.name,
-        building: data.building || null,
-        floor: data.floor || null,
-        imageUrl: data.imageUrl,
-        active: data.active,
+        name,
+        building: building || null,
+        floor: floor || null,
+        imageUrl,
+        active: active ?? true,
+      },
+      include: {
+        _count: {
+          select: { rooms: true },
+        },
       },
     });
+
     return NextResponse.json({ floorPlan });
   } catch (error) {
-    console.error("Error updating floor plan:", error);
-    return NextResponse.json({ error: "Failed to update floor plan" }, { status: 500 });
+    console.error('Error updating floor plan:', error);
+    return NextResponse.json(
+      { error: 'Failed to update floor plan' },
+      { status: 500 }
+    );
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+/**
+ * Delete a floor plan
+ * DELETE /api/admin/floor-plans/[id]
+ */
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = await params;
-    await prisma.floorPlan.delete({ where: { id } });
+    const { id } = params;
+
+    // Delete floor plan (this will unlink rooms but not delete them)
+    await prisma.floorPlan.delete({
+      where: { id },
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting floor plan:", error);
-    return NextResponse.json({ error: "Failed to delete floor plan" }, { status: 500 });
+    console.error('Error deleting floor plan:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete floor plan' },
+      { status: 500 }
+    );
   }
 }
-
