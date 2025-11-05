@@ -12,12 +12,28 @@ interface SyncResult {
   errors: string[];
 }
 
+interface CalendarSyncResult {
+  success: boolean;
+  results: {
+    totalRooms: number;
+    totalEvents: number;
+    imported: number;
+    updated: number;
+    skipped: number;
+    errors: string[];
+  };
+}
+
 export default function MicrosoftSyncPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  const [syncingCalendar, setSyncingCalendar] = useState(false);
+  const [calendarSyncResult, setCalendarSyncResult] = useState<CalendarSyncResult | null>(null);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
 
   const handleSync = async () => {
     if (!session?.user?.email) {
@@ -54,6 +70,38 @@ export default function MicrosoftSyncPage() {
     }
   };
 
+  const handleCalendarSync = async () => {
+    if (!session?.user?.email) {
+      setCalendarError('Not authenticated');
+      return;
+    }
+
+    setSyncingCalendar(true);
+    setCalendarError(null);
+    setCalendarSyncResult(null);
+
+    try {
+      const response = await fetch(
+        `/api/admin/microsoft/sync-calendar?userEmail=${encodeURIComponent(session.user.email)}`,
+        { method: 'GET' }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Calendar sync failed');
+      }
+
+      setCalendarSyncResult(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Calendar sync error:', err);
+      setCalendarError(errorMessage);
+    } finally {
+      setSyncingCalendar(false);
+    }
+  };
+
   if (session?.user?.role !== 'ADMIN') {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -84,10 +132,10 @@ export default function MicrosoftSyncPage() {
           </div>
         </div>
 
-        {/* Info Box */}
+        {/* Info Box - Rooms */}
         <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-6 mb-6 shadow-lg">
           <h2 className="font-bold text-lg text-gray-900 mb-3 flex items-center gap-2">
-            <span>ℹ️</span> Wat doet deze sync?
+            <span>ℹ️</span> Wat doet de Room Sync?
           </h2>
           <ul className="text-gray-700 space-y-2">
             <li className="flex items-start gap-2">
@@ -105,6 +153,31 @@ export default function MicrosoftSyncPage() {
             <li className="flex items-start gap-2">
               <span className="text-teal-500 font-bold mt-1">•</span>
               <span>Koppelt room email adressen voor calendar synchronisatie</span>
+            </li>
+          </ul>
+        </div>
+
+        {/* Info Box - Calendar */}
+        <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-6 mb-6 shadow-lg">
+          <h2 className="font-bold text-lg text-gray-900 mb-3 flex items-center gap-2">
+            <span>📅</span> Wat doet de Calendar Sync?
+          </h2>
+          <ul className="text-gray-700 space-y-2">
+            <li className="flex items-start gap-2">
+              <span className="text-purple-500 font-bold mt-1">•</span>
+              <span>Import alle externe bookings die rechtstreeks via Outlook zijn gemaakt</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-purple-500 font-bold mt-1">•</span>
+              <span>Synchroniseert events van room calendars naar de app database</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-purple-500 font-bold mt-1">•</span>
+              <span>Voorkomt dubbele bookings van events buiten de app</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-purple-500 font-bold mt-1">•</span>
+              <span>Toont alle reservaties (app + Outlook) in één overzicht</span>
             </li>
           </ul>
         </div>
@@ -212,6 +285,103 @@ export default function MicrosoftSyncPage() {
                     onClick={handleSync}
                     disabled={syncing}
                     className="bg-white border-2 border-teal-400 text-teal-600 hover:bg-teal-50 font-bold px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                  >
+                    🔄 Sync Opnieuw
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* DIVIDER */}
+        <div className="border-t-4 border-gray-200 my-8"></div>
+
+        {/* Calendar Sync Section */}
+        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-xl p-8 text-center border-2 border-purple-200 mb-6">
+          <div className="text-6xl mb-4">📅</div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">Calendar Events Sync</h3>
+          <p className="text-gray-700 mb-6">
+            Import externe reservaties die rechtstreeks via Outlook zijn gemaakt
+          </p>
+          <button
+            onClick={handleCalendarSync}
+            disabled={syncingCalendar}
+            className="bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl hover:shadow-2xl transition-all hover:scale-105 disabled:cursor-not-allowed disabled:hover:scale-100"
+          >
+            {syncingCalendar ? (
+              <span className="flex items-center gap-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                Synchroniseren...
+              </span>
+            ) : (
+              '📥 Sync Calendar Events'
+            )}
+          </button>
+        </div>
+
+        {/* Calendar Sync Error */}
+        {calendarError && (
+          <div className="bg-red-50 border-2 border-red-300 rounded-xl p-6 mb-6">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">❌</span>
+              <div className="flex-1">
+                <h3 className="font-bold text-red-900 mb-2">Calendar Sync Error</h3>
+                <p className="text-red-700 whitespace-pre-wrap font-mono text-sm">{calendarError}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Calendar Sync Success */}
+        {calendarSyncResult && calendarSyncResult.success && (
+          <div className="bg-green-50 border-2 border-green-300 rounded-xl p-6 mb-6">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">✅</span>
+              <div className="flex-1">
+                <h3 className="font-bold text-green-900 mb-3">Calendar Sync Succesvol!</h3>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                  <div className="bg-white rounded-lg p-4 border-2 border-purple-200">
+                    <div className="text-2xl font-bold text-purple-600">{calendarSyncResult.results.totalRooms}</div>
+                    <div className="text-xs text-gray-600 font-semibold">Rooms</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 border-2 border-blue-200">
+                    <div className="text-2xl font-bold text-blue-600">{calendarSyncResult.results.totalEvents}</div>
+                    <div className="text-xs text-gray-600 font-semibold">Events Found</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 border-2 border-green-200">
+                    <div className="text-2xl font-bold text-green-600">{calendarSyncResult.results.imported}</div>
+                    <div className="text-xs text-gray-600 font-semibold">Imported</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 border-2 border-orange-200">
+                    <div className="text-2xl font-bold text-orange-600">{calendarSyncResult.results.skipped}</div>
+                    <div className="text-xs text-gray-600 font-semibold">Skipped</div>
+                  </div>
+                </div>
+
+                {calendarSyncResult.results.errors.length > 0 && (
+                  <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mb-4">
+                    <h4 className="font-bold text-yellow-900 mb-2">⚠️ Warnings ({calendarSyncResult.results.errors.length})</h4>
+                    <ul className="text-sm text-yellow-800 space-y-1 max-h-40 overflow-y-auto">
+                      {calendarSyncResult.results.errors.map((err, idx) => (
+                        <li key={idx} className="break-all">{err}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="mt-4 flex gap-3">
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    className="bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-500 hover:to-pink-500 text-white font-bold px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                  >
+                    📊 Bekijk Dashboard
+                  </button>
+                  <button
+                    onClick={handleCalendarSync}
+                    disabled={syncingCalendar}
+                    className="bg-white border-2 border-purple-400 text-purple-600 hover:bg-purple-50 font-bold px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
                   >
                     🔄 Sync Opnieuw
                   </button>
