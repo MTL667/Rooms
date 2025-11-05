@@ -764,41 +764,6 @@ export default function DashboardPage() {
             <h1 className="text-xl font-bold">Rooms</h1>
           </div>
           <div className="flex gap-2 items-center flex-wrap">
-            {/* Date Navigation */}
-            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md border border-white/30 rounded-lg px-2 py-1.5">
-              <button
-                onClick={goToPreviousDay}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-bold px-2 py-1 rounded-md transition-all text-sm"
-                title="Vorige dag"
-              >
-                ←
-              </button>
-              
-              <input
-                type="date"
-                value={selectedDate.toISOString().split('T')[0]}
-                onChange={handleDateChange}
-                className="bg-white/10 text-white border border-white/40 rounded-md px-2 py-1 text-xs font-semibold focus:outline-none focus:border-cyan-400 cursor-pointer"
-              />
-              
-              {!isToday(selectedDate) && (
-                <button
-                  onClick={goToToday}
-                  className="bg-cyan-400/60 hover:bg-cyan-500/70 backdrop-blur-md border border-cyan-300/40 text-white font-semibold px-2 py-1 rounded-md transition-all text-xs whitespace-nowrap"
-                >
-                  📅 {t('today')}
-                </button>
-              )}
-
-              <button
-                onClick={goToNextDay}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-bold px-2 py-1 rounded-md transition-all text-sm"
-                title="Volgende dag"
-              >
-                →
-              </button>
-            </div>
-
             {session?.user?.role === 'ADMIN' && (
               <button
                 onClick={() => router.push('/admin')}
@@ -952,7 +917,44 @@ export default function DashboardPage() {
         )}
 
         {/* Table View */}
-        <h3 className="text-2xl font-bold text-gray-900 mb-4">📊 {t('roomsAvailability')} - Tijdlijn</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-2xl font-bold text-gray-900">📊 {t('roomsAvailability')} - Tijdlijn</h3>
+          
+          {/* Date Navigation */}
+          <div className="flex items-center gap-2 bg-gradient-to-r from-teal-400/20 to-cyan-400/20 backdrop-blur-md border border-teal-300/40 rounded-lg px-3 py-2">
+            <button
+              onClick={goToPreviousDay}
+              className="bg-teal-500/60 hover:bg-teal-600/70 backdrop-blur-md border border-teal-400/40 text-white font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105"
+              title="Vorige dag"
+            >
+              ←
+            </button>
+            
+            <input
+              type="date"
+              value={selectedDate.toISOString().split('T')[0]}
+              onChange={handleDateChange}
+              className="bg-white border-2 border-teal-400/60 rounded-lg px-3 py-1.5 text-gray-900 font-semibold focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/50 cursor-pointer"
+            />
+            
+            {!isToday(selectedDate) && (
+              <button
+                onClick={goToToday}
+                className="bg-cyan-400/60 hover:bg-cyan-500/70 backdrop-blur-md border border-cyan-300/40 text-white font-semibold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 whitespace-nowrap"
+              >
+                📅 {t('today')}
+              </button>
+            )}
+
+            <button
+              onClick={goToNextDay}
+              className="bg-teal-500/60 hover:bg-teal-600/70 backdrop-blur-md border border-teal-400/40 text-white font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105"
+              title="Volgende dag"
+            >
+              →
+            </button>
+          </div>
+        </div>
         
         {loading ? (
           <div className="bg-gradient-to-br from-teal-900/50 to-cyan-900/50 rounded-xl shadow-lg p-12 text-center border border-teal-400/20">

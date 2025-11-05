@@ -10,9 +10,21 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const userEmail = searchParams.get('userEmail');
     const tenantId = searchParams.get('tenantId');
+    const date = searchParams.get('date');
 
     if (!userEmail || !tenantId) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    }
+
+    // Parse date range for filtering bookings
+    let startOfDay: Date | undefined;
+    let endOfDay: Date | undefined;
+    
+    if (date) {
+      startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
     }
 
     // Get user to check role
@@ -30,6 +42,13 @@ export async function GET(req: Request) {
         where: { active: true },
         include: {
           bookings: {
+            where: startOfDay && endOfDay ? {
+              OR: [
+                { start: { gte: startOfDay, lte: endOfDay } },
+                { end: { gte: startOfDay, lte: endOfDay } },
+                { AND: [{ start: { lte: startOfDay } }, { end: { gte: endOfDay } }] },
+              ],
+            } : undefined,
             orderBy: { start: 'asc' },
           },
           locationRef: {
@@ -70,6 +89,13 @@ export async function GET(req: Request) {
       },
       include: {
         bookings: {
+          where: startOfDay && endOfDay ? {
+            OR: [
+              { start: { gte: startOfDay, lte: endOfDay } },
+              { end: { gte: startOfDay, lte: endOfDay } },
+              { AND: [{ start: { lte: startOfDay } }, { end: { gte: endOfDay } }] },
+            ],
+          } : undefined,
           orderBy: { start: 'asc' },
         },
         locationRef: {
