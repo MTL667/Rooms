@@ -115,7 +115,7 @@ export async function GET(req: Request) {
                 data: {
                   email: organizerEmail,
                   name: organizerName,
-                  role: 'USER',
+                  role: 'EXTERNAL', // External users who book via Outlook
                 },
               });
               console.log(`   👤 Created user: ${organizerEmail}`);
