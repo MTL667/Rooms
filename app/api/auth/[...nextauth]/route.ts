@@ -111,12 +111,13 @@ const authOptions = {
         if (token?.email) {
           const user = await prisma.user.findUnique({ where: { email: token.email } });
           if (user) {
-            console.log('Session for user:', user.email, 'Role:', user.role);
+            console.log('Session for user:', user.email, 'Role:', user.role, 'TenantId:', user.msTenantId);
             session.user.role = user.role;
             session.user.id = user.id;
             session.user.identityProvider = user.identityProvider;
             session.user.email = user.email;
             session.user.name = user.name;
+            session.user.msTenantId = user.msTenantId;
           }
         }
       } catch (error) {

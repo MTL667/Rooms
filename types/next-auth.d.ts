@@ -5,6 +5,7 @@ declare module "next-auth" {
     id?: string;
     role?: Role;
     identityProvider?: IdentityProvider;
+    msTenantId?: string | null;
   }
   
   interface Session {
@@ -15,6 +16,7 @@ declare module "next-auth" {
       image?: string | null;
       role?: Role;
       identityProvider?: IdentityProvider;
+      msTenantId?: string | null;
     };
   }
 }

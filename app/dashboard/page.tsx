@@ -114,7 +114,7 @@ export default function DashboardPage() {
   const loadRooms = () => {
     if (!session?.user?.email) return;
     const dateString = selectedDate.toISOString().split('T')[0];
-    const tenantId = (session.user as any).tenantId || '';
+    const tenantId = session.user.msTenantId || '';
     const url = `/api/rooms?date=${dateString}&userEmail=${encodeURIComponent(session.user.email)}&tenantId=${encodeURIComponent(tenantId)}`;
     fetch(url, { cache: 'no-store' })
       .then(res => res.json())
