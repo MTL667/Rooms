@@ -37,10 +37,21 @@ Vul dan in:
 AZURE_TENANT_ID=your-tenant-id-from-azure-portal
 AZURE_CLIENT_ID=your-client-id-from-azure-portal
 AZURE_CLIENT_SECRET=your-client-secret-from-azure
+
+# Single domain
 AZURE_AD_TENANT_DOMAIN=yourcompany.com
+
+# OR multiple domains (recommended if you have multiple)
+AZURE_AD_TENANT_DOMAINS=company.com,company.be,subsidiary.com
 ```
 
-**AZURE_AD_TENANT_DOMAIN**: Het primaire email domein van je organisatie (bijv. `company.com`). Dit wordt gebruikt om interne users te onderscheiden van externe/guest users. Interne users krijgen native Outlook invitations, externe users krijgen iCal (.ics) attachments via email.
+**AZURE_AD_TENANT_DOMAIN** / **AZURE_AD_TENANT_DOMAINS**: 
+- Single domain: gebruik `AZURE_AD_TENANT_DOMAIN=company.com`
+- Multiple domains: gebruik `AZURE_AD_TENANT_DOMAINS=company.com,company.be,subsidiary.com` (comma-separated)
+- Dit wordt gebruikt om interne users te onderscheiden van externe/guest users
+- Interne users (matching domains) krijgen native Outlook invitations
+- Externe users (other domains) krijgen iCal (.ics) attachments via email
+- `AZURE_AD_TENANT_DOMAINS` heeft voorrang als beide zijn ingesteld
 
 ### 4. Email Configuratie (voor magic links)
 ```

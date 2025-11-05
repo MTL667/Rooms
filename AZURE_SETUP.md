@@ -49,16 +49,26 @@ Waar `a6635289-2bef-4bc0-bda9-15defbf6685f` je Azure AD Tenant ID is.
 ## External Tenant Calendar Invitations
 
 ### Environment Variable
+
+**Single Domain:**
 ```env
 AZURE_AD_TENANT_DOMAIN=yourdomain.com
 ```
 
-Set this to your **primary organization's email domain** (e.g., `company.com`).
+**Multiple Domains (comma-separated):**
+```env
+AZURE_AD_TENANT_DOMAINS=company.com,company.be,subsidiary.com
+```
+
+Set this to your **organization's email domain(s)**. If you have multiple domains registered in your Azure AD tenant, use comma-separated list.
+
+**Note:** `AZURE_AD_TENANT_DOMAINS` takes precedence over `AZURE_AD_TENANT_DOMAIN` if both are set.
 
 ### How it works:
 
 #### Internal Users (Same Organization)
-- Email domain matches `AZURE_AD_TENANT_DOMAIN`
+- Email domain matches one of your configured domains
+- Example: `john@company.com`, `marie@company.be`, `admin@subsidiary.com`
 - Calendar events created in **both** calendars:
   1. User's Outlook calendar
   2. Room resource calendar
@@ -66,7 +76,8 @@ Set this to your **primary organization's email domain** (e.g., `company.com`).
 - Full Microsoft Graph integration
 
 #### External Users (Guest Organizations)
-- Email domain **different** from `AZURE_AD_TENANT_DOMAIN`
+- Email domain **different** from your configured domains
+- Example: `jane@partner.com`, `external@client.org`
 - Calendar event created **only** in room calendar
 - User receives email with **iCal (.ics) attachment**
 - User can import to their own calendar system
@@ -74,7 +85,25 @@ Set this to your **primary organization's email domain** (e.g., `company.com`).
 
 ### Example Flow:
 
-**Internal User** (`john@company.com`):
+**Multiple Internal Domains:**
+```env
+AZURE_AD_TENANT_DOMAINS=company.com,company.be,subsidiary.com
+```
+
+**Internal Users** (all receive Outlook invitations):
+```
+john@company.com     → ✅ Internal → Outlook invitation
+marie@company.be     → ✅ Internal → Outlook invitation  
+admin@subsidiary.com → ✅ Internal → Outlook invitation
+```
+
+**External Users** (all receive iCal attachments):
+```
+jane@partner.com   → 🌍 External → iCal attachment
+guest@client.org   → 🌍 External → iCal attachment
+```
+
+**Detailed Flow - Internal User** (`john@company.com`):
 ```
 User books room
   → Event in john@company.com calendar ✅
@@ -82,7 +111,7 @@ User books room
   → Native Outlook invitation ✅
 ```
 
-**External User** (`jane@partner.com`):
+**Detailed Flow - External User** (`jane@partner.com`):
 ```
 User books room
   → Event in meetingroom@company.com calendar ✅

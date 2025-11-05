@@ -87,12 +87,20 @@ export async function POST(req: Request) {
     
     // Determine if this is an external tenant user
     // External = user from a different organization that we don't have internal Graph API access to
-    const isExternalTenant = !userTenant || userTenant.domain !== process.env.AZURE_AD_TENANT_DOMAIN;
+    // Support multiple internal domains (comma-separated)
+    const internalDomains = (process.env.AZURE_AD_TENANT_DOMAINS || process.env.AZURE_AD_TENANT_DOMAIN || '')
+      .split(',')
+      .map(d => d.trim().toLowerCase())
+      .filter(d => d.length > 0);
+    
+    const isInternalDomain = internalDomains.includes(userDomain.toLowerCase());
+    const isExternalTenant = !userTenant || !isInternalDomain;
     
     if (isExternalTenant) {
       console.log(`🌍 External tenant user detected: ${userEmail} (domain: ${userDomain})`);
+      console.log(`   Internal domains: ${internalDomains.join(', ')}`);
     } else {
-      console.log(`🏢 Internal tenant user: ${userEmail}`);
+      console.log(`🏢 Internal tenant user: ${userEmail} (domain: ${userDomain})`);
     }
 
     let msEventId: string | null = null;
