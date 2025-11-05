@@ -978,7 +978,7 @@ export default function DashboardPage() {
                 <tbody>
                   {(() => {
                     const { grouped, unassigned } = groupRoomsByLocation(rooms);
-                    const roomRows: JSX.Element[] = [];
+                    const roomRows: React.ReactElement[] = [];
 
                     // Render rooms grouped by location
                     Object.entries(grouped).forEach(([locationId, { location, rooms: locationRooms }]) => {
