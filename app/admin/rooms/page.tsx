@@ -343,7 +343,7 @@ export default function RoomsManagement() {
                   onClick={() => {
                     setShowForm(false);
                     setEditingRoom(null);
-                    setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null, areaWidth: null, areaHeight: null });
+                    setFormData({ name: '', location: '', locationId: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null, areaWidth: null, areaHeight: null });
                   }}
                   className="bg-gray-600/60 hover:bg-gray-700/70 backdrop-blur-md border border-gray-400/30 text-white px-6 py-2 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
                 >
