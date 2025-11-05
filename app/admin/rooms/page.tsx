@@ -10,10 +10,17 @@ interface FloorPlan {
   imageUrl: string;
 }
 
+interface Location {
+  id: string;
+  name: string;
+  city: string | null;
+}
+
 interface Room {
   id: string;
   name: string;
   location: string | null;
+  locationId: string | null;
   capacity: number;
   msResourceEmail: string | null;
   hourlyRateCents: number;
@@ -25,6 +32,7 @@ interface Room {
   areaWidth: number | null;
   areaHeight: number | null;
   _count: { bookings: number };
+  locationRef?: { name: string; city: string | null };
 }
 
 export default function RoomsManagement() {
@@ -32,12 +40,14 @@ export default function RoomsManagement() {
   const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     location: '',
+    locationId: '',
     capacity: 10,
     msResourceEmail: '',
     active: true,
@@ -58,6 +68,7 @@ export default function RoomsManagement() {
     }
     loadRooms();
     loadFloorPlans();
+    loadLocations();
   }, [session, router]);
 
   const loadRooms = async () => {
@@ -79,6 +90,16 @@ export default function RoomsManagement() {
       setFloorPlans(data.floorPlans || []);
     } catch (error) {
       console.error('Error loading floor plans:', error);
+    }
+  };
+
+  const loadLocations = async () => {
+    try {
+      const res = await fetch(`/api/admin/locations?userEmail=${encodeURIComponent(session?.user?.email || '')}`);
+      const data = await res.json();
+      setLocations(data.locations || []);
+    } catch (error) {
+      console.error('Error loading locations:', error);
     }
   };
 
@@ -107,7 +128,7 @@ export default function RoomsManagement() {
       setShowForm(false);
       setEditingRoom(null);
       setShowPositionPicker(false);
-      setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null, areaWidth: null, areaHeight: null });
+      setFormData({ name: '', location: '', locationId: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null, areaWidth: null, areaHeight: null });
     } catch (error) {
       console.error('Error saving room:', error);
     }
@@ -118,6 +139,7 @@ export default function RoomsManagement() {
     setFormData({
       name: room.name,
       location: room.location || '',
+      locationId: room.locationId || '',
       capacity: room.capacity,
       msResourceEmail: room.msResourceEmail || '',
       active: room.active,
@@ -172,7 +194,7 @@ export default function RoomsManagement() {
                 setShowForm(!showForm);
                 if (showForm) {
                   setEditingRoom(null);
-                  setFormData({ name: '', location: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null, areaWidth: null, areaHeight: null });
+                  setFormData({ name: '', location: '', locationId: '', capacity: 10, msResourceEmail: '', active: true, floorPlanId: '', positionX: null, positionY: null, areaWidth: null, areaHeight: null });
                 }
               }}
               className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-teal-300/30 text-white px-4 py-2 rounded-xl font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
@@ -217,15 +239,32 @@ export default function RoomsManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-900">Location</label>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  <label className="block text-sm font-semibold mb-2 text-gray-900">📍 Locatie</label>
+                  <select
+                    value={formData.locationId}
+                    onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
                     className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 text-gray-900"
-                    placeholder="Floor 2"
-                  />
+                  >
+                    <option value="">Geen locatie</option>
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name} {loc.city ? `(${loc.city})` : ''}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">📝 Location Details (oud string veld)</label>
+                <input
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 text-gray-900"
+                  placeholder="Verdieping 2, Vleugel A"
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-4">
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-2 text-gray-900">MS Resource Email</label>

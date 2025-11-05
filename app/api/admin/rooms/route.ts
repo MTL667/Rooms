@@ -9,6 +9,12 @@ export async function GET() {
         _count: {
           select: { bookings: true },
         },
+        locationRef: {
+          select: {
+            name: true,
+            city: true,
+          },
+        },
       },
     });
     return NextResponse.json({ rooms });
@@ -26,6 +32,7 @@ export async function POST(req: Request) {
         name: data.name,
         capacity: data.capacity,
         location: data.location || null,
+        locationId: data.locationId || null,
         msResourceEmail: data.msResourceEmail || null,
         hourlyRateCents: data.hourlyRateCents || 0,
         active: data.active ?? true,

@@ -19,12 +19,18 @@ interface Room {
   id: string;
   name: string;
   location: string | null;
+  locationId: string | null;
   capacity: number;
   bookings: Booking[];
   positionX: number | null;
   positionY: number | null;
   areaWidth: number | null;
   areaHeight: number | null;
+  locationRef?: {
+    id: string;
+    name: string;
+    city: string | null;
+  };
 }
 
 interface FloorPlanRoom extends Room {
@@ -106,9 +112,11 @@ export default function DashboardPage() {
   };
 
   const loadRooms = () => {
-    if (!session) return;
+    if (!session?.user?.email) return;
     const dateString = selectedDate.toISOString().split('T')[0];
-    fetch(`/api/rooms?date=${dateString}`, { cache: 'no-store' })
+    const tenantId = (session.user as any).tenantId || '';
+    const url = `/api/rooms?date=${dateString}&userEmail=${encodeURIComponent(session.user.email)}&tenantId=${encodeURIComponent(tenantId)}`;
+    fetch(url, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         setRooms(data.rooms || []);
@@ -127,6 +135,167 @@ export default function DashboardPage() {
       const end = new Date(booking.end);
       return start <= now && end > now;
     });
+  };
+
+  // Group rooms by location
+  const groupRoomsByLocation = (rooms: Room[]) => {
+    const grouped: Record<string, { location: { id: string; name: string; city: string | null }; rooms: Room[] }> = {};
+    const unassigned: Room[] = [];
+
+    rooms.forEach((room) => {
+      if (!room.locationRef) {
+        unassigned.push(room);
+      } else {
+        const locationKey = room.locationRef.id;
+        if (!grouped[locationKey]) {
+          grouped[locationKey] = {
+            location: room.locationRef,
+            rooms: [],
+          };
+        }
+        grouped[locationKey].rooms.push(room);
+      }
+    });
+
+    return { grouped, unassigned };
+  };
+
+  // Render a single room row for the timeline table
+  const renderRoomRow = (room: Room) => {
+    // Calculate position and width for each booking as a percentage
+    const bookingsWithPositions = (room.bookings || []).map((booking) => {
+      const start = new Date(booking.start);
+      const end = new Date(booking.end);
+      const startHour = start.getHours() + start.getMinutes() / 60;
+      const endHour = end.getHours() + end.getMinutes() / 60;
+      
+      // Calculate position from 6:00
+      const startPos = ((startHour - 6) / 17) * 100;
+      const width = ((endHour - startHour) / 17) * 100;
+      
+      return {
+        ...booking,
+        startPos: Math.max(0, Math.min(100, startPos)),
+        width: Math.max(0, Math.min(100 - startPos, width)),
+        startTime: start.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
+        endTime: end.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
+      };
+    });
+
+    return (
+      <tr 
+        key={room.id} 
+        className={`hover:bg-teal-900/20 transition-colors border-b border-teal-400/10 ${
+          dropTargetRoom === room.id ? 'bg-cyan-500/20 ring-2 ring-cyan-400' : ''
+        }`}
+      >
+        <td className="border border-teal-400/20 p-4 sticky left-0 bg-gradient-to-br from-teal-900/40 to-cyan-900/40 z-10 border-r-2 border-teal-400/30">
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <div className="font-bold text-white text-lg">{room.name}</div>
+              <div className="text-sm text-teal-300 font-medium">{room.location}</div>
+              <div className="text-sm text-cyan-300 font-semibold">👥 {room.capacity} {t('people')}</div>
+            </div>
+            <button
+              onClick={() => handleBookRoom(room)}
+              className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 min-w-[85px] whitespace-nowrap"
+            >
+              📅 {t('book')}
+            </button>
+          </div>
+        </td>
+        <td 
+          colSpan={timeSlots.length} 
+          className={`border border-teal-400/20 p-0 relative h-16 transition-colors ${
+            dropTargetRoom === room.id 
+              ? 'bg-gradient-to-br from-cyan-500/30 to-teal-500/30' 
+              : 'bg-gradient-to-br from-emerald-500/10 to-teal-500/10'
+          }`}
+          data-room-id={room.id}
+          onDragOver={(e) => handleDragOver(room.id, e)}
+          onDragLeave={() => handleDragLeave(room.id)}
+          onDrop={(e) => handleDrop(room, e)}
+        >
+          {/* Time grid lines */}
+          <div className="absolute inset-0 flex">
+            {timeSlots.map((hour, idx) => (
+              <div
+                key={hour}
+                className="flex-1 border-r border-teal-400/10"
+                style={{ borderRight: idx === timeSlots.length - 1 ? 'none' : undefined }}
+              />
+            ))}
+          </div>
+          
+          {/* Booking bars */}
+          {bookingsWithPositions.map((booking, idx) => {
+            const isOwner = booking.userId === session?.user?.id;
+            const isDragging = draggingBooking?.booking.id === booking.id;
+            const isResizing = resizingBooking?.booking.id === booking.id;
+            return (
+              <div
+                key={booking.id}
+                draggable={isOwner && !isResizing}
+                onDragStart={(e) => isOwner && !isResizing && handleDragStart(booking, room, e)}
+                onDragEnd={handleDragEnd}
+                onClick={() => isOwner && !isDragging && !isResizing && handleEditBooking(booking, room)}
+                className={`absolute top-1 bottom-1 bg-gradient-to-r from-red-500/80 to-pink-500/80 backdrop-blur-sm border-2 border-red-400/40 rounded-lg shadow-lg flex items-center justify-center overflow-visible group hover:shadow-xl transition-all ${
+                  isOwner ? 'cursor-move hover:scale-105 hover:border-red-300' : 'cursor-default'
+                } ${isDragging ? 'opacity-50 scale-95' : ''} ${isResizing ? 'ring-2 ring-yellow-400' : ''}`}
+                style={{
+                  left: `${booking.startPos}%`,
+                  width: `${booking.width}%`,
+                  zIndex: isResizing ? 50 : 10 + idx,
+                }}
+                title={`${booking.title}\n${booking.startTime} - ${booking.endTime}${isOwner ? '\n\nKlik: bewerken | Sleep: verplaats room | Randen: aanpassen tijd' : ''}`}
+              >
+                {/* Left resize handle */}
+                {isOwner && (
+                  <div
+                    className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-yellow-400/50 transition-colors z-10"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleResizeStart(booking, room, 'start', e);
+                    }}
+                    title="Sleep om starttijd aan te passen"
+                  >
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-yellow-400/70 rounded-r" />
+                  </div>
+                )}
+
+                <div className="text-white text-xs font-bold px-2 truncate flex items-center gap-1 pointer-events-none">
+                  {isOwner && booking.width > 5 && (
+                    <span className="text-yellow-300">✏️</span>
+                  )}
+                  {booking.width > 8 && (
+                    <span>{booking.startTime} - {booking.endTime}</span>
+                  )}
+                  {booking.width > 15 && (
+                    <span className="ml-2">• {booking.title}</span>
+                  )}
+                </div>
+
+                {/* Right resize handle */}
+                {isOwner && (
+                  <div
+                    className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-yellow-400/50 transition-colors z-10"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleResizeStart(booking, room, 'end', e);
+                    }}
+                    title="Sleep om eindtijd aan te passen"
+                  >
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-yellow-400/70 rounded-l" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </td>
+      </tr>
+    );
   };
 
   const handleBookRoom = (room: Room) => {
@@ -807,149 +976,50 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rooms.map((room) => {
-                    // Calculate position and width for each booking as a percentage
-                    const bookingsWithPositions = (room.bookings || []).map((booking) => {
-                      const start = new Date(booking.start);
-                      const end = new Date(booking.end);
-                      const startHour = start.getHours() + start.getMinutes() / 60;
-                      const endHour = end.getHours() + end.getMinutes() / 60;
-                      
-                      // Calculate position from 6:00
-                      const startPos = ((startHour - 6) / 17) * 100;
-                      const width = ((endHour - startHour) / 17) * 100;
-                      
-                      return {
-                        ...booking,
-                        startPos: Math.max(0, Math.min(100, startPos)),
-                        width: Math.max(0, Math.min(100 - startPos, width)),
-                        startTime: start.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
-                        endTime: end.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
-                      };
+                  {(() => {
+                    const { grouped, unassigned } = groupRoomsByLocation(rooms);
+                    const roomRows: JSX.Element[] = [];
+
+                    // Render rooms grouped by location
+                    Object.entries(grouped).forEach(([locationId, { location, rooms: locationRooms }]) => {
+                      // Location header row
+                      roomRows.push(
+                        <tr key={`location-header-${locationId}`}>
+                          <td
+                            colSpan={timeSlots.length + 1}
+                            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 font-bold text-lg border-t-2 border-purple-400"
+                          >
+                            📍 {location.name} {location.city ? `(${location.city})` : ''}
+                          </td>
+                        </tr>
+                      );
+
+                      // Room rows for this location
+                      locationRooms.forEach((room) => {
+                        roomRows.push(renderRoomRow(room));
+                      });
                     });
 
-                    return (
-                      <tr 
-                        key={room.id} 
-                        className={`hover:bg-teal-900/20 transition-colors border-b border-teal-400/10 ${
-                          dropTargetRoom === room.id ? 'bg-cyan-500/20 ring-2 ring-cyan-400' : ''
-                        }`}
-                      >
-                        <td className="border border-teal-400/20 p-4 sticky left-0 bg-gradient-to-br from-teal-900/40 to-cyan-900/40 z-10 border-r-2 border-teal-400/30">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <div className="font-bold text-white text-lg">{room.name}</div>
-                              <div className="text-sm text-teal-300 font-medium">{room.location}</div>
-                              <div className="text-sm text-cyan-300 font-semibold">👥 {room.capacity} {t('people')}</div>
-                            </div>
-                            <button
-                              onClick={() => handleBookRoom(room)}
-                              className="bg-gradient-to-r from-teal-400/80 to-cyan-400/80 hover:from-teal-500/90 hover:to-cyan-500/90 backdrop-blur-md border border-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 min-w-[85px] whitespace-nowrap"
-                            >
-                              📅 {t('book')}
-                            </button>
-                          </div>
-                        </td>
-                        <td 
-                          colSpan={timeSlots.length} 
-                          className={`border border-teal-400/20 p-0 relative h-16 transition-colors ${
-                            dropTargetRoom === room.id 
-                              ? 'bg-gradient-to-br from-cyan-500/30 to-teal-500/30' 
-                              : 'bg-gradient-to-br from-emerald-500/10 to-teal-500/10'
-                          }`}
-                          data-room-id={room.id}
-                          onDragOver={(e) => handleDragOver(room.id, e)}
-                          onDragLeave={() => handleDragLeave(room.id)}
-                          onDrop={(e) => handleDrop(room, e)}
-                        >
-                          {/* Time grid lines */}
-                          <div className="absolute inset-0 flex">
-                            {timeSlots.map((hour, idx) => (
-                              <div
-                                key={hour}
-                                className="flex-1 border-r border-teal-400/10"
-                                style={{ borderRight: idx === timeSlots.length - 1 ? 'none' : undefined }}
-                              />
-                            ))}
-                          </div>
-                          
-                          {/* Booking bars */}
-                          {bookingsWithPositions.map((booking, idx) => {
-                            const isOwner = booking.userId === session?.user?.id;
-                            const isDragging = draggingBooking?.booking.id === booking.id;
-                            const isResizing = resizingBooking?.booking.id === booking.id;
-                            return (
-                              <div
-                                key={booking.id}
-                                draggable={isOwner && !isResizing}
-                                onDragStart={(e) => isOwner && !isResizing && handleDragStart(booking, room, e)}
-                                onDragEnd={handleDragEnd}
-                                onClick={() => isOwner && !isDragging && !isResizing && handleEditBooking(booking, room)}
-                                className={`absolute top-1 bottom-1 bg-gradient-to-r from-red-500/80 to-pink-500/80 backdrop-blur-sm border-2 border-red-400/40 rounded-lg shadow-lg flex items-center justify-center overflow-visible group hover:shadow-xl transition-all ${
-                                  isOwner ? 'cursor-move hover:scale-105 hover:border-red-300' : 'cursor-default'
-                                } ${isDragging ? 'opacity-50 scale-95' : ''} ${isResizing ? 'ring-2 ring-yellow-400' : ''}`}
-                                style={{
-                                  left: `${booking.startPos}%`,
-                                  width: `${booking.width}%`,
-                                  zIndex: isResizing ? 50 : 10 + idx,
-                                }}
-                                title={`${booking.title}\n${booking.startTime} - ${booking.endTime}${isOwner ? '\n\nKlik: bewerken | Sleep: verplaats room | Randen: aanpassen tijd' : ''}`}
-                              >
-                                {/* Left resize handle */}
-                                {isOwner && (
-                                  <div
-                                    className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-yellow-400/50 transition-colors z-10"
-                                    onMouseDown={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      handleResizeStart(booking, room, 'start', e);
-                                    }}
-                                    title="Sleep om starttijd aan te passen"
-                                  >
-                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-yellow-400/70 rounded-r" />
-                                  </div>
-                                )}
+                    // Render unassigned rooms (no location)
+                    if (unassigned.length > 0) {
+                      roomRows.push(
+                        <tr key="location-header-unassigned">
+                          <td
+                            colSpan={timeSlots.length + 1}
+                            className="bg-gradient-to-r from-gray-600 to-gray-500 text-white px-4 py-3 font-bold text-lg border-t-2 border-gray-400"
+                          >
+                            📍 Geen Locatie
+                          </td>
+                        </tr>
+                      );
 
-                                <div className="text-white text-xs font-bold px-2 truncate flex items-center gap-1 pointer-events-none">
-                                  {isOwner && booking.width > 5 && (
-                                    <span className="text-yellow-300">✏️</span>
-                                  )}
-                                  {booking.width > 8 && (
-                                    <span>{booking.startTime} - {booking.endTime}</span>
-                                  )}
-                                  {booking.width > 15 && (
-                                    <span className="ml-2">• {booking.title}</span>
-                                  )}
-                                </div>
+                      unassigned.forEach((room) => {
+                        roomRows.push(renderRoomRow(room));
+                      });
+                    }
 
-                                {/* Right resize handle */}
-                                {isOwner && (
-                                  <div
-                                    className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-yellow-400/50 transition-colors z-10"
-                                    onMouseDown={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      handleResizeStart(booking, room, 'end', e);
-                                    }}
-                                    title="Sleep om eindtijd aan te passen"
-                                  >
-                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-yellow-400/70 rounded-l" />
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                          
-                          {/* Show "Free" if no bookings */}
-                          {bookingsWithPositions.length === 0 && (
-                            <div className="absolute inset-0 flex items-center justify-center text-emerald-400 font-semibold text-sm">
-                              ✓ {t('available')}
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                    return roomRows;
+                  })()}
                 </tbody>
               </table>
             </div>
