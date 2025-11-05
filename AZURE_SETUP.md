@@ -45,3 +45,64 @@ VALUES ('a6635289-2bef-4bc0-bda9-15defbf6685f', 'Your Company', true);
 ```
 
 Waar `a6635289-2bef-4bc0-bda9-15defbf6685f` je Azure AD Tenant ID is.
+
+## External Tenant Calendar Invitations
+
+### Environment Variable
+```env
+AZURE_AD_TENANT_DOMAIN=yourdomain.com
+```
+
+Set this to your **primary organization's email domain** (e.g., `company.com`).
+
+### How it works:
+
+#### Internal Users (Same Organization)
+- Email domain matches `AZURE_AD_TENANT_DOMAIN`
+- Calendar events created in **both** calendars:
+  1. User's Outlook calendar
+  2. Room resource calendar
+- User receives native Outlook invitation
+- Full Microsoft Graph integration
+
+#### External Users (Guest Organizations)
+- Email domain **different** from `AZURE_AD_TENANT_DOMAIN`
+- Calendar event created **only** in room calendar
+- User receives email with **iCal (.ics) attachment**
+- User can import to their own calendar system
+- Works across any email/calendar provider
+
+### Example Flow:
+
+**Internal User** (`john@company.com`):
+```
+User books room
+  → Event in john@company.com calendar ✅
+  → Event in meetingroom@company.com calendar ✅
+  → Native Outlook invitation ✅
+```
+
+**External User** (`jane@partner.com`):
+```
+User books room
+  → Event in meetingroom@company.com calendar ✅
+  → Email with .ics attachment to jane@partner.com 📧
+  → jane opens .ics → adds to her calendar ✅
+```
+
+### Why?
+
+Multi-tenant Azure AD apps can only access calendars **within their own tenant**. External users from other organizations need calendar invitations via standard iCal format, which works universally across all calendar systems (Outlook, Google Calendar, Apple Calendar, etc.).
+
+### Tenant Domain Configuration
+
+Add the `domain` field to allowed tenants for proper external user detection:
+
+```sql
+UPDATE "AllowedTenant" 
+SET domain = 'yourdomain.com'
+WHERE tenant_id = 'your-tenant-id';
+```
+
+Tenants with `domain` matching `AZURE_AD_TENANT_DOMAIN` = Internal users
+All other tenants = External users (get iCal attachments)

@@ -75,20 +75,47 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
+    // Check if user is from an external tenant
+    const userDomain = userEmail.split('@')[1];
+    const userTenant = await prisma.allowedTenant.findFirst({
+      where: {
+        domain: userDomain,
+        status: 'APPROVED',
+        active: true,
+      },
+    });
+    
+    // Determine if this is an external tenant user
+    // External = user from a different organization that we don't have internal Graph API access to
+    const isExternalTenant = !userTenant || userTenant.domain !== process.env.AZURE_AD_TENANT_DOMAIN;
+    
+    if (isExternalTenant) {
+      console.log(`🌍 External tenant user detected: ${userEmail} (domain: ${userDomain})`);
+    } else {
+      console.log(`🏢 Internal tenant user: ${userEmail}`);
+    }
+
     let msEventId: string | null = null;
     let msICalUid: string | null = null;
 
     // Sync with Microsoft Calendar if room has resource email
+    // For external tenants, we can only create event in room calendar (not user calendar)
     if (room.msResourceEmail) {
       try {
         console.log(`Syncing booking to Microsoft Calendar for room: ${room.msResourceEmail}`);
+        
+        if (isExternalTenant) {
+          console.log(`⚠️ External tenant - will only sync to room calendar, not user calendar`);
+        }
+        
         const msEvent = await createRoomBooking(
           room.msResourceEmail,
           title,
           description || '',
           startDate,
           endDate,
-          userEmail
+          userEmail,
+          isExternalTenant
         );
         msEventId = msEvent.id;
         msICalUid = msEvent.iCalUId || null;
@@ -129,7 +156,13 @@ export async function POST(req: Request) {
         endTime: endDate,
         title: title,
         description: description,
+        includeIcal: isExternalTenant, // Add iCal attachment for external users
+        organizerEmail: userEmail,
       });
+      
+      if (isExternalTenant) {
+        console.log('📧 Sent email with iCal attachment to external user');
+      }
     } catch (emailError) {
       console.error('Email sending failed but booking was created:', emailError);
     }

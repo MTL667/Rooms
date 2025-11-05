@@ -37,7 +37,10 @@ Vul dan in:
 AZURE_TENANT_ID=your-tenant-id-from-azure-portal
 AZURE_CLIENT_ID=your-client-id-from-azure-portal
 AZURE_CLIENT_SECRET=your-client-secret-from-azure
+AZURE_AD_TENANT_DOMAIN=yourcompany.com
 ```
+
+**AZURE_AD_TENANT_DOMAIN**: Het primaire email domein van je organisatie (bijv. `company.com`). Dit wordt gebruikt om interne users te onderscheiden van externe/guest users. Interne users krijgen native Outlook invitations, externe users krijgen iCal (.ics) attachments via email.
 
 ### 4. Email Configuratie (voor magic links)
 ```
@@ -50,6 +53,27 @@ EMAIL_FROM=noreply@your-domain.com
 - **Mailgun**: `smtp://username:password@smtp.mailgun.org:587`
 - **Gmail**: `smtp://your-email@gmail.com:app-password@smtp.gmail.com:587`
 - **Resend**: Gebruik Resend API, geen SMTP
+
+### 5. SendGrid (voor booking notifications)
+Voor automatische booking confirmation emails met calendar invitations:
+
+```
+SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+SENDGRID_FROM_EMAIL=bookings@your-domain.com
+```
+
+**Setup**:
+1. Maak een account aan op https://sendgrid.com
+2. Ga naar Settings > API Keys
+3. Create API Key met "Full Access" permissions
+4. Verifieer je sender email/domain in SendGrid
+5. Vul de API key en verified sender email in
+
+**Features**:
+- Booking confirmation emails met HTML formatting
+- iCal (.ics) attachments voor externe tenants
+- Automatic reminder information
+- Cancellation notifications
 
 ## Minimale Setup (zonder MS Graph)
 Als je eerst wilt testen zonder Microsoft Graph integratie:

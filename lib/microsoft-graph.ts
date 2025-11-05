@@ -312,7 +312,8 @@ export async function createRoomBooking(
   description: string,
   startTime: Date,
   endTime: Date,
-  organizerEmail: string
+  organizerEmail: string,
+  isExternalTenant: boolean = false
 ): Promise<CalendarEvent> {
   try {
     const client = createGraphClient();
@@ -359,20 +360,17 @@ export async function createRoomBooking(
     console.log(`Creating calendar event for room: ${roomEmail}`);
     console.log(`Organizer: ${organizerEmail}`);
     console.log(`Time: ${startTime.toISOString()} - ${endTime.toISOString()}`);
+    console.log(`External tenant: ${isExternalTenant}`);
 
-    // Create event on the organizer's calendar with send notifications
-    // This will trigger Microsoft to send meeting invitations to attendees
-    const createdEvent = await client
-      .api(`/users/${organizerEmail}/calendar/events`)
-      .post(event);
+    let createdEvent: any;
 
-    console.log(`✅ Calendar event created: ${createdEvent.id}`);
-
-    // Also create the event in the room's calendar so it shows up in their availability
-    // This helps with double-booking prevention
-    try {
-      console.log(`Adding event to room calendar: ${roomEmail}`);
-      await client
+    if (isExternalTenant) {
+      // For external tenants: only create event in room's calendar
+      // We don't have access to external tenant user calendars
+      // User will get iCal attachment via email instead
+      console.log(`🌍 External tenant - creating event ONLY in room calendar`);
+      
+      createdEvent = await client
         .api(`/users/${roomEmail}/calendar/events`)
         .post({
           ...event,
@@ -386,10 +384,44 @@ export async function createRoomBooking(
             },
           ],
         });
-      console.log(`✅ Event added to room calendar`);
-    } catch (roomCalendarError: any) {
-      console.log(`⚠️ Could not add to room calendar (this is okay):`, roomCalendarError.message);
-      // This is optional - the invitation will still work if organizer's event is created
+      
+      console.log(`✅ Event created in room calendar: ${createdEvent.id}`);
+      console.log(`📧 User will receive iCal attachment via email`);
+    } else {
+      // For internal tenants: create in both calendars
+      // Create event on the organizer's calendar with send notifications
+      // This will trigger Microsoft to send meeting invitations to attendees
+      console.log(`🏢 Internal tenant - creating event in organizer's calendar first`);
+      
+      createdEvent = await client
+        .api(`/users/${organizerEmail}/calendar/events`)
+        .post(event);
+
+      console.log(`✅ Calendar event created in organizer's calendar: ${createdEvent.id}`);
+
+      // Also create the event in the room's calendar so it shows up in their availability
+      // This helps with double-booking prevention
+      try {
+        console.log(`Adding event to room calendar: ${roomEmail}`);
+        await client
+          .api(`/users/${roomEmail}/calendar/events`)
+          .post({
+            ...event,
+            attendees: [
+              {
+                emailAddress: {
+                  address: organizerEmail,
+                  name: organizerEmail,
+                },
+                type: 'required',
+              },
+            ],
+          });
+        console.log(`✅ Event added to room calendar`);
+      } catch (roomCalendarError: any) {
+        console.log(`⚠️ Could not add to room calendar (this is okay):`, roomCalendarError.message);
+        // This is optional - the invitation will still work if organizer's event is created
+      }
     }
 
     return {
