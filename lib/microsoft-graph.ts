@@ -119,6 +119,10 @@ export interface CalendarEvent {
   organizer?: { emailAddress: { name?: string; address: string } };
   location?: { displayName: string };
   iCalUId?: string;
+  bodyPreview?: string;
+  attendees?: Array<{ emailAddress: { name?: string; address: string } }>;
+  isAllDay?: boolean;
+  isCancelled?: boolean;
 }
 
 export interface RoomAvailability {
