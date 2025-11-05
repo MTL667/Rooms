@@ -7,10 +7,10 @@ import { prisma } from '@/lib/prisma';
  */
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
     const { name, building, floor, imageUrl, active } = body;
 
@@ -55,10 +55,10 @@ export async function PATCH(
  */
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Delete floor plan (this will unlink rooms but not delete them)
     await prisma.floorPlan.delete({
