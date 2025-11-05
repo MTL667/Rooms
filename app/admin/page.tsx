@@ -61,6 +61,16 @@ export default function AdminPage() {
           </button>
 
           <button
+            onClick={() => router.push('/admin/locations')}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg shadow p-6 text-left transition-colors"
+          >
+            <div className="text-2xl font-semibold mb-2">📍 Locaties</div>
+            <p className="text-purple-100 text-sm">
+              Beheer locaties en tenant toegang
+            </p>
+          </button>
+
+          <button
             onClick={() => router.push('/admin/rooms')}
             className="bg-green-600 hover:bg-green-700 text-white rounded-lg shadow p-6 text-left transition-colors"
           >

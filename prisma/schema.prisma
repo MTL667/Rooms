@@ -65,6 +65,30 @@ model User {
   bookings         Booking[]
 }
 
+model Location {
+  id               String            @id @default(cuid())
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  name             String
+  address          String?
+  city             String?
+  country          String?
+  active           Boolean           @default(true)
+  rooms            Room[]
+  allowedTenants   LocationTenant[]
+}
+
+model LocationTenant {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  locationId     String
+  location       Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  tenantId       String
+  
+  @@unique([locationId, tenantId])
+  @@index([tenantId])
+}
+
 model FloorPlan {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -87,6 +111,8 @@ model Room {
   msResourceEmail String?
   hourlyRateCents Int        @default(0)
   active          Boolean    @default(true)
+  locationId      String?
+  locationRef     Location?  @relation(fields: [locationId], references: [id])
   floorPlanId     String?
   floorPlan       FloorPlan? @relation(fields: [floorPlanId], references: [id])
   positionX       Float?
